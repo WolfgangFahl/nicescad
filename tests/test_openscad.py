@@ -16,6 +16,15 @@ class TestOpenScad(Basetest):
         test finding the openscad executable
         """
         oscad=OpenScad()
-        oscad.try_detect_openscad_exec()
         self.assertTrue(oscad.openscad_exec is not None)
+        
+    def testRender(self):
+        """
+        test rendering a scad file
+        """
+        oscad=OpenScad(openscad_exec="/Users/wf/bin/openscad")
+        openscad_str="cube(5);"
+        stl=oscad.openscad_str_to_file(openscad_str)
+        print(stl)
+        pass
         
