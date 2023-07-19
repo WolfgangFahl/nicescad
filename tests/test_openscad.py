@@ -22,7 +22,8 @@ class TestOpenScad(Basetest):
         """
         test rendering a scad file
         """
-        oscad=OpenScad(openscad_exec="/Users/wf/bin/openscad")
+        # openscad_exec="/Users/wf/bin/openscad"
+        oscad=OpenScad()
         openscad_str="cube(5);"
         stl=oscad.openscad_str_to_file(openscad_str)
         print(stl)
