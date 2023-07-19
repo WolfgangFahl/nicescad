@@ -7,7 +7,7 @@ Created on 2021-08-19
 import getpass
 from unittest import TestCase
 import os
-from meta.profiler import Profiler
+from nicescad.profiler import Profiler
 
 class Basetest(TestCase):
     """
