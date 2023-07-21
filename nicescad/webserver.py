@@ -23,7 +23,7 @@ class WebServer:
     def __init__(self):
         """Constructs all the necessary attributes for the WebServer object."""
         self.oscad = OpenScad()
-        self.code="""c=cube(3;center=true);
+        self.code="""c=cube(3,center=true);
 s=sphere(2,center=true);"""        
         self.input="example.scad"
         self.is_local=True
