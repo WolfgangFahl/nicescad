@@ -143,6 +143,21 @@ sphere(2,center=true);"""
         with ui.button(name,icon=icon_name) as button:
             button.on("click",lambda: (ui.open(target)))
         return button
+    
+    def tool_button(self,name,icon,handler):
+        """
+        Creates an icon button that triggers a specified function upon being clicked.
+    
+        Args:
+            name (str): The name of the button (not displayed, but could be used for identification).
+            icon (str): The name of the icon to be displayed on the button.
+            handler (function): The function to be called when the button is clicked.
+    
+        Returns:
+            The icon button object.
+        """
+        icon=ui.icon(icon, color='primary').classes('text-5xl').on("click",handler=handler)  
+        return icon    
         
     def setup_menu(self):
         """Adds a link to the project's GitHub page in the web server's menu."""
@@ -188,7 +203,10 @@ sphere(2,center=true);"""
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
-                            ui.icon('save', color='primary').classes('text-5xl').on("click",handler=self.save_file)  
+                            self.tool_button(name="save",icon="save",handler=self.save_file)
+                            self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
+                            self.tool_button(name="open",icon="open",handler=self.open_file)
+                            
                             self.code_area = ui.textarea(value=self.code,on_change=self.code_changed).props('clearable').props("rows=25")
                             ui.button('Render', on_click=self.render)
         self.error_area = ui.textarea().classes("w-full").props("rows=10;cols=80;")        
