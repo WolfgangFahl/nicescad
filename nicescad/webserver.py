@@ -31,7 +31,7 @@ sphere(2,center=true);"""
         self.input="example.scad"
         self.is_local=True
         app.add_static_files('/stl', self.oscad.tmp_dir)
-        self.error_area=None
+        self.log_view=None
         self.do_trace=True
 
         @ui.page('/')
@@ -54,8 +54,8 @@ sphere(2,center=true);"""
             self.error_msg = str(e) + "\n" + traceback.format_exc()
         else:
             self.error_msg = str(e)
-        if self.error_area:
-            self.error_area.set_value(self.error_msg)
+        if self.log_view:
+            self.log_view.push(self.error_msg)
         print(self.error_msg,file=sys.stderr)
 
         
@@ -69,12 +69,14 @@ sphere(2,center=true);"""
         ui.notify("rendering ...")
         try:
             openscad_str = self.code_area.value
-            self.stl = self.oscad.openscad_str_to_file(openscad_str)
+            render_result= self.oscad.openscad_str_to_file(openscad_str)
             self.progressbar.value=0.5
-            ui.notify("stl created ... loading into scene")
-            with self.scene:
-                self.scene.clear()
-                self.scene.stl("/stl/tmp.stl").move(x=0.0).scale(0.1)
+            self.log_view.push(render_result.stderr)
+            if render_result.returncode==0:
+                ui.notify("stl created ... loading into scene")
+                with self.scene:
+                    self.scene.clear()
+                    self.scene.stl("/stl/tmp.stl").move(x=0.0).scale(0.1)    
         except Exception as ex:
             self.handle_exception(ex,self.do_trace)  
         self.progressbar.visible=False  
@@ -108,7 +110,7 @@ sphere(2,center=true);"""
             self.code = self.do_read_input(input)
             self.input_input.set_value(input)
             self.code_area.set_value(self.code)
-            self.error_area.set_value("")
+            self.log_view.clear()
             self.error_msg = None
         except Exception as e:
             self.code = None
@@ -209,7 +211,7 @@ sphere(2,center=true);"""
                 with splitter.before:
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
                         self.scene = scene
-                        scene.spot_light(distance=100, intensity=0.1).move(-10, 0, 10)
+                        scene.spot_light(distance=100, intensity=0.2).move(-10, 0, 10)
                     with splitter.after:
                         with ui.element("div").classes("w-full"):
                             self.input_input=ui.input(
@@ -222,7 +224,7 @@ sphere(2,center=true);"""
                             self.progressbar = ui.linear_progress(value=0).props('instant-feedback')
                             self.progressbar.visible = False
                             self.code_area = ui.textarea(value=self.code,on_change=self.code_changed).props('clearable').props("rows=25")
-                            self.error_area = ui.textarea().props('clearable').props("rows=10")        
+                            self.log_view = ui.log(max_lines=20).classes('w-full h-40')        
         self.setup_footer()        
         if self.args.input:
             self.read_input(self.args.input)

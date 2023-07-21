@@ -10,7 +10,7 @@ from typing import Dict
 import tempfile
 import os
 import platform
-import subprocess
+from nicescad.process import Subprocess
 
 
 class OpenScad:
@@ -65,7 +65,7 @@ class OpenScad:
             self._try_executable(os.path.join(os.environ.get('Programfiles(x86)', 'C:'), 'OpenSCAD\\openscad.exe'))
             self._try_executable(os.path.join(os.environ.get('Programfiles', 'C:'), 'OpenSCAD\\openscad.exe'))
 
-    def render_to_file(self, openscad_str: str, fl_name: str, **kwargs) -> None:
+    def render_to_file(self, openscad_str: str, fl_name: str, **kwargs) -> Subprocess:
         """
         Renders an OpenSCAD string to a file.
 
@@ -75,41 +75,45 @@ class OpenScad:
             kwargs: Additional arguments, could be 'dollar_sign_vars' for dollar-sign variables or 'rough' for rough rendering.
         
         Raises:
-            Exception: If there's an error in the OpenSCAD command.
+            Subprocess: the openscad execution result
         """     
         scad_tmp_file = os.path.join(self.tmp_dir, 'tmp.scad')
-        try:
-            with open(scad_tmp_file, 'w') as of:
-                of.write(self.scad_prepend)
-                of.write(openscad_str)
+        with open(scad_tmp_file, 'w') as of:
+            of.write(self.scad_prepend)
+            of.write(openscad_str)
 
-            # now run openscad to generate stl:
-            cmd = [self.openscad_exec, '-o', fl_name, scad_tmp_file]
-            out = subprocess.check_output(cmd)
-            if out != b'':
-                print(out)
-        except Exception as e:
-            raise e
-        finally:
+        # now run openscad to generate stl:
+        cmd = [self.openscad_exec, '-o', fl_name, scad_tmp_file]
+        result = Subprocess.run(cmd)
+        # on success we'll remove the temporary file
+        if result.returncode==0:
             if os.path.isfile(scad_tmp_file):
-                os.remove(scad_tmp_file) 
-                
-    def openscad_str_to_file(self, openscad_str, **kw):
-        """
-        render the openscad code to a file
-        """
-        self.saved_umask = os.umask(0o077)        
-        if 'outfile' in kw:
-            openscad_out_file = kw['outfile']
+                os.remove(scad_tmp_file)
         else:
-            openscad_out_file = os.path.join(self.tmp_dir, 'tmp.stl')                    
+            result.scad_tmp_file=scad_tmp_file
+        return result
+                
+    def openscad_str_to_file(self, openscad_str: str, **kwargs) -> Subprocess:
+        """
+        Renders the OpenSCAD code to a file.
+    
+        Args:
+            openscad_str (str): The OpenSCAD code.
+            **kwargs: Additional arguments, could include 'outfile' to specify the output file name.
+    
+        Returns:
+            Subprocess: The result of the subprocess run, encapsulated in a Subprocess object.
+        """
+        self.saved_umask = os.umask(0o077)
         try:
-            self.render_to_file(openscad_str, openscad_out_file, **kw)
-            if openscad_out_file.find('.stl') >= 0:                
-                return openscad_out_file
+            if 'outfile' in kwargs:
+                openscad_out_file = kwargs['outfile']
             else:
-                # @TODO improve
-                print('No rendering if non-STL file is being created.')
-        except Exception as e:
-            raise e
-        return None
+                openscad_out_file = os.path.join(self.tmp_dir, 'tmp.stl')                    
+            
+            result = self.render_to_file(openscad_str, openscad_out_file, **kwargs)
+            
+            return result
+        finally:
+            os.umask(self.saved_umask)
+
