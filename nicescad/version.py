@@ -16,7 +16,7 @@ class Version(object):
     
     authors = 'Wolfgang Fahl'
     
-    doc_url="https://github.com/WolfgangFahl/nicescad"
+    doc_url="https://wiki.bitplan.com/index.php/nicescad"
     chat_url="https://github.com/WolfgangFahl/nicescad/discussions"
     cm_url="https://github.com/WolfgangFahl/nicescad"
 

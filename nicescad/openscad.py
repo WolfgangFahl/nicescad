@@ -18,10 +18,11 @@ class OpenScad:
     A wrapper for OpenScad (https://openscad.org/).
     """
 
-    def __init__(self,**kw) -> None:
+    def __init__(self,scad_prepend:str= '',**kw) -> None:
         """
         Initializes the OpenScad object.
         """
+        self.scad_prepend=scad_prepend
         self.openscad_exec = None
         self.openscad_tmp_dir = None
         if 'OPENSCAD_EXEC' in os.environ: self.openscad_exec = os.environ['OPENSCAD_EXEC']
@@ -75,19 +76,11 @@ class OpenScad:
         
         Raises:
             Exception: If there's an error in the OpenSCAD command.
-        """
-        scad_prepend = ''        
-        dollar_sign_vars: Dict[str, str] = kwargs.get('dollar_sign_vars', {})
-        for var_name, value in dollar_sign_vars.items():
-            scad_prepend += '${}={};\n'.format(var_name, value)
-
-        if not kwargs.get('rough', False) and not dollar_sign_vars:
-            scad_prepend += '$fn=120;\n'
-                
+        """     
         scad_tmp_file = os.path.join(self.tmp_dir, 'tmp.scad')
         try:
             with open(scad_tmp_file, 'w') as of:
-                of.write(scad_prepend)
+                of.write(self.scad_prepend)
                 of.write(openscad_str)
 
             # now run openscad to generate stl:

@@ -22,7 +22,9 @@ class WebServer:
 
     def __init__(self):
         """Constructs all the necessary attributes for the WebServer object."""
-        self.oscad = OpenScad()
+        self.oscad = OpenScad(scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
+// default number o facets for arc generation
+$fn=30;""")
         self.code="""cube(3,center=true);
 sphere(2,center=true);"""        
         self.input="example.scad"
@@ -164,8 +166,9 @@ sphere(2,center=true);"""
         with ui.header() as self.header:
             self.link_button("home","/","home")
             self.link_button("settings","/settings","settings")
-            self.link_button("github","https://github.com/WolfgangFahl/nicescad","github")
-            self.link_button("docs",Version.doc_url,"docs")
+            self.link_button("github",Version.cm_url,"bug_report")
+            self.link_button("chat",Version.chat_url,"chat")
+            self.link_button("help",Version.doc_url,"help")
     
     def setup_footer(self):
         """
@@ -205,7 +208,7 @@ sphere(2,center=true);"""
                                 on_change=self.input_changed).props("size=100")
                             self.tool_button(name="save",icon="save",handler=self.save_file)
                             self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
-                            self.tool_button(name="open",icon="open",handler=self.open_file)
+                            self.tool_button(name="open",icon="file_open",handler=self.open_file)
                             
                             self.code_area = ui.textarea(value=self.code,on_change=self.code_changed).props('clearable').props("rows=25")
                             ui.button('Render', on_click=self.render)
@@ -218,6 +221,8 @@ sphere(2,center=true);"""
         """Generates the settings page with a link to the project's GitHub page."""
         self.setup_menu()
         v = ui.checkbox('debug with trace', value=True)
+        sp_input=ui.textarea("scad prepend",value=self.oscad.scad_prepend)
+        sp_input.bind_value(self.oscad,"scad_prepend")
         self.setup_footer()
        
     def run(self, args):
