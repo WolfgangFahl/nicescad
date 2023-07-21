@@ -25,7 +25,7 @@ class WebServer:
         self.oscad = OpenScad()
         self.code="""c=cube(3;center=true);
 s=sphere(2,center=true);"""        
-        self.input="example.stl"
+        self.input="example.scad"
         self.is_local=True
         app.add_static_files('/stl', self.oscad.tmp_dir)
         self.error_area=None
@@ -111,6 +111,7 @@ s=sphere(2,center=true);"""
         if self.is_local and self.input:
             with open(self.input, 'w') as file:
                 file.write(self.code)
+            ui.notify("{self.input} saved")
         else:
             raise Exception('No local file to save to')
     
