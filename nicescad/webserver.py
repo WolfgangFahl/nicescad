@@ -8,6 +8,7 @@ from nicescad.version import Version
 from nicescad.openscad import OpenScad
 from nicescad.local_filepicker import LocalFilePicker
 from nicegui import ui, app
+import asyncio
 import os
 import sys
 import requests
@@ -57,21 +58,26 @@ sphere(2,center=true);"""
             self.error_area.set_value(self.error_msg)
         print(self.error_msg,file=sys.stderr)
 
- 
-    def render(self, _click_args):
+        
+    async def render(self, _click_args):
         """Renders the OpenScad string and updates the 3D scene with the result.
 
         Args:
             click_args (object): The click event arguments.
         """
-        openscad_str = self.code_area.value
+        self.progressbar.visible = True
+        ui.notify("rendering ...")
         try:
-            _stl = self.oscad.openscad_str_to_file(openscad_str)
+            openscad_str = self.code_area.value
+            self.stl = self.oscad.openscad_str_to_file(openscad_str)
+            self.progressbar.value=0.5
+            ui.notify("stl created ... loading into scene")
             with self.scene:
                 self.scene.clear()
-                self.scene.stl("/stl/tmp.stl").move(x=-0.5).scale(0.06)
+                self.scene.stl("/stl/tmp.stl").move(x=0.0).scale(0.1)
         except Exception as ex:
-            self.handle_exception(ex,self.do_trace)    
+            self.handle_exception(ex,self.do_trace)  
+        self.progressbar.visible=False  
             
     def do_read_input(self, input_str: str):
         """Reads the given input.
@@ -119,15 +125,18 @@ sphere(2,center=true);"""
     
     async def open_file(self) -> None:
         """Opens a Local filer picker dialog and reads the selected input file."""
-        result = await LocalFilePicker('~', multiple=True)
-        ui.notify(f'Opening {result}')
-        self.read_input(result)
+        pick_list = await LocalFilePicker('~', multiple=False)
+        if len(pick_list)>0:
+            input_file=pick_list[0]
+            ui.notify(f'Opening {input_file}')
+            self.read_input(input_file)
     pass
 
     def reload_file(self):
         """
         reload the input file
         """
+        ui.notify(f"reloading {self.input} ...")
         self.read_input(self.input)
     
     def link_button(self, name: str, target: str, icon_name: str):
@@ -146,7 +155,7 @@ sphere(2,center=true);"""
             button.on("click",lambda: (ui.open(target)))
         return button
     
-    def tool_button(self,name,icon,handler):
+    def tool_button(self,name:str,icon:str,handler:callable):
         """
         Creates an icon button that triggers a specified function upon being clicked.
     
@@ -158,7 +167,7 @@ sphere(2,center=true);"""
         Returns:
             The icon button object.
         """
-        icon=ui.icon(icon, color='primary').classes('text-5xl').on("click",handler=handler)  
+        icon=ui.icon(icon, color='primary').classes('text-4xl').tooltip(name).on("click",handler=handler)  
         return icon    
         
     def setup_menu(self):
@@ -209,10 +218,11 @@ sphere(2,center=true);"""
                             self.tool_button(name="save",icon="save",handler=self.save_file)
                             self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
                             self.tool_button(name="open",icon="file_open",handler=self.open_file)
-                            
+                            self.tool_button(name="render",icon="play_circle",handler=self.render)
+                            self.progressbar = ui.linear_progress(value=0).props('instant-feedback')
+                            self.progressbar.visible = False
                             self.code_area = ui.textarea(value=self.code,on_change=self.code_changed).props('clearable').props("rows=25")
-                            ui.button('Render', on_click=self.render)
-        self.error_area = ui.textarea().classes("w-full").props("rows=10;cols=80;")        
+                            self.error_area = ui.textarea().props('clearable').props("rows=10")        
         self.setup_footer()        
         if self.args.input:
             self.read_input(self.args.input)
@@ -221,7 +231,7 @@ sphere(2,center=true);"""
         """Generates the settings page with a link to the project's GitHub page."""
         self.setup_menu()
         v = ui.checkbox('debug with trace', value=True)
-        sp_input=ui.textarea("scad prepend",value=self.oscad.scad_prepend)
+        sp_input=ui.textarea("scad prepend",value=self.oscad.scad_prepend).props("cols=80")
         sp_input.bind_value(self.oscad,"scad_prepend")
         self.setup_footer()
        
