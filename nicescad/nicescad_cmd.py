@@ -26,6 +26,8 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     parser.add_argument("-a","--about",help="show about info [default: %(default)s]",action="store_true")
     parser.add_argument("-c","--client", action="store_true", help="start client [default: %(default)s]")
     parser.add_argument("-d", "--debug", dest="debug", action="store_true", help="show debug info [default: %(default)s]")
+    parser.add_argument("-i", "--input", help="input file")
+
     parser.add_argument("--host", default="localhost",
                             help="the host to serve / listen from [default: %(default)s]")
     parser.add_argument("--port",type=int,default=9858,help="the port to serve from [default: %(default)s]")
@@ -60,7 +62,7 @@ def main(argv=None):
             webbrowser.open(url)
         if args.serve:
             ws=WebServer()
-            ws.run(host=args.host,port=args.port)
+            ws.run(args)
         
     except KeyboardInterrupt:
         ### handle keyboard interrupt ###
