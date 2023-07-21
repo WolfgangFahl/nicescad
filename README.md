@@ -11,3 +11,7 @@
 
 ## Docs and Tutorials
 [Wiki](https://wiki.bitplan.com/index.php/nicescad)
+
+## Links
+* https://openscad.org/
+* https://nicegui.io

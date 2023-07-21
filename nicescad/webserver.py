@@ -63,10 +63,13 @@ s=sphere(2,center=true);"""
             click_args (object): The click event arguments.
         """
         openscad_str = self.code_area.value
-        stl = self.oscad.openscad_str_to_file(openscad_str)
-        with self.scene:
-            self.scene.clear()
-            self.scene.stl("/stl/tmp.stl").move(x=-0.5).scale(0.06)
+        try:
+            _stl = self.oscad.openscad_str_to_file(openscad_str)
+            with self.scene:
+                self.scene.clear()
+                self.scene.stl("/stl/tmp.stl").move(x=-0.5).scale(0.06)
+        except Exception as ex:
+            self.handle_exception(ex,self.do_trace)    
             
     def do_read_input(self, input: str):
         """Reads the given input.
@@ -130,16 +133,13 @@ s=sphere(2,center=true);"""
     def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
         self.menu()
-        with ui.splitter() as splitter:
-            with splitter.before:
-                with ui.scene(width=1024, height=768) as scene:
-                    self.scene = scene
-                    scene.spot_light(distance=100, intensity=0.1).move(-10, 0, 10)
-            with splitter.after:
-                self.input_input=ui.input(value=self.input)
-                self.code_area = ui.textarea(value=self.code).props('clearable;rows=20')
-                self.error_area = ui.textarea()
-                ui.button('Render', on_click=self.render)
+        with ui.scene(width=1024, height=768) as scene:
+            self.scene = scene
+            scene.spot_light(distance=100, intensity=0.1).move(-10, 0, 10)
+        self.input_input=ui.input(value=self.input).props("width=100")
+        self.code_area = ui.textarea(value=self.code).props('clearable;rows=20;cols=80')
+        self.error_area = ui.textarea().props("rows=10;cols=80")
+        ui.button('Render', on_click=self.render)
         if self.args.input:
             self.read_input(self.args.input)
   
