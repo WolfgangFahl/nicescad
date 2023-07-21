@@ -111,7 +111,7 @@ s=sphere(2,center=true);"""
         if self.is_local and self.input:
             with open(self.input, 'w') as file:
                 file.write(self.code)
-            ui.notify("{self.input} saved")
+            ui.notify(f"{self.input} saved")
         else:
             raise Exception('No local file to save to')
     
