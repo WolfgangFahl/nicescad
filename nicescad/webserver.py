@@ -23,8 +23,8 @@ class WebServer:
     def __init__(self):
         """Constructs all the necessary attributes for the WebServer object."""
         self.oscad = OpenScad()
-        self.code="""c=cube(3,center=true);
-s=sphere(2,center=true);"""        
+        self.code="""cube(3,center=true);
+sphere(2,center=true);"""        
         self.input="example.scad"
         self.is_local=True
         app.add_static_files('/stl', self.oscad.tmp_dir)
@@ -127,36 +127,30 @@ s=sphere(2,center=true);"""
         reload the input file
         """
         self.read_input(self.input)
-
-    def help(self):
-        """
-        show help dialog
-        """
-        pass
     
-    def link_button(self,name,target,icon_name):
+    def link_button(self, name: str, target: str, icon_name: str):
         """
+        Creates a button with a specified icon that opens a target URL upon being clicked.
+    
+        Args:
+            name (str): The name to be displayed on the button.
+            target (str): The target URL that should be opened when the button is clicked.
+            icon_name (str): The name of the icon to be displayed on the button.
+    
+        Returns:
+            The button object.
         """
-        btn=ui.button(name,icon=icon_name)
-        return btn
+        with ui.button(name,icon=icon_name) as button:
+            button.on("click",lambda: (ui.open(target)))
+        return button
         
-    
     def setup_menu(self):
         """Adds a link to the project's GitHub page in the web server's menu."""
         with ui.header() as self.header:
             self.link_button("home","/","home")
             self.link_button("settings","/settings","settings")
-    
-            with ui.button(icon='menu'):
-                with ui.menu() as self.menu:
-                    ui.menu_item('Open', self.open_file)
-                    ui.menu_item('Save', self.save_file)
-                    ui.menu_item("Reload",self.reload_file)
-                    ui.separator()
-                    ui.menu_item('Help', on_click=self.help)
-        with ui.left_drawer().props('bordered').classes("w-4/12") as self.left_drawer:
-            ui.link('nicescad on GitHub', 'https://github.com/WolfgangFahl/nicescad')
-            pass
+            self.link_button("github","https://github.com/WolfgangFahl/nicescad","github")
+            self.link_button("docs",Version.doc_url,"docs")
     
     def setup_footer(self):
         """
