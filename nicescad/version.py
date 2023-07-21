@@ -11,7 +11,7 @@ class Version(object):
     name = "nicescad"
     version = nicescad.__version__
     date = '2023-07-19'
-    updated = '2023-07-19'
+    updated = '2023-07-21'
     description = 'Nice Scad',
     
     authors = 'Wolfgang Fahl'
