@@ -115,7 +115,7 @@ s=sphere(2,center=true);"""
             raise Exception('No local file to save to')
     
     async def open_file(self) -> None:
-        """Opens a dialog."""
+        """Opens a Local filer picker dialog and reads the selected input file."""
         result = await LocalFilePicker('~', multiple=True)
         ui.notify(f'Opening {result}')
         self.read_input(result)
@@ -133,10 +133,19 @@ s=sphere(2,center=true);"""
         """
         pass
     
+    def link_button(self,name,target,icon_name):
+        """
+        """
+        btn=ui.button(name,icon=icon_name)
+        return btn
+        
+    
     def setup_menu(self):
         """Adds a link to the project's GitHub page in the web server's menu."""
         with ui.header() as self.header:
-            ui.label("nicescad")
+            self.link_button("home","/","home")
+            self.link_button("settings","/settings","settings")
+    
             with ui.button(icon='menu'):
                 with ui.menu() as self.menu:
                     ui.menu_item('Open', self.open_file)
@@ -184,6 +193,7 @@ s=sphere(2,center=true);"""
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
+                            ui.icon('save', color='primary').classes('text-5xl').on("click",handler=self.save_file)  
                             self.code_area = ui.textarea(value=self.code,on_change=self.code_changed).props('clearable').props("rows=25")
                             ui.button('Render', on_click=self.render)
         self.error_area = ui.textarea().classes("w-full").props("rows=10;cols=80;")        
@@ -194,6 +204,8 @@ s=sphere(2,center=true);"""
     def settings(self):
         """Generates the settings page with a link to the project's GitHub page."""
         self.setup_menu()
+        v = ui.checkbox('debug with trace', value=True)
+        self.setup_footer()
        
     def run(self, args):
         """Runs the UI of the web server.
