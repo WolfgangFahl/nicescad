@@ -50,11 +50,11 @@ example();"""
             self.settings()
             
             
-    def handle_exception(self, e: Exception, trace: Optional[bool] = False):
+    def handle_exception(self, e: BaseException, trace: Optional[bool] = False):
         """Handles an exception by creating an error message.
 
         Args:
-            e (Exception): The exception to handle.
+            e (BaseException): The exception to handle.
             trace (bool, optional): Whether to include the traceback in the error message. Default is False.
         """
         if trace:
@@ -85,7 +85,7 @@ example();"""
                 ui.notify("stl created ... loading into scene")
                 with self.scene:
                     self.scene.stl("/stl/tmp.stl").move(x=0.0).scale(0.1)    
-        except Exception as ex:
+        except BaseException as ex:
             self.handle_exception(ex,self.do_trace)  
         self.progress_view.visible=False  
             
@@ -120,7 +120,7 @@ example();"""
             self.code_area.set_value(self.code)
             self.log_view.clear()
             self.error_msg = None
-        except Exception as e:
+        except BaseException as e:
             self.code = None
             self.handle_exception(e, self.do_trace)
             
@@ -229,12 +229,15 @@ example();"""
         highlight the code and show the html 
         """
         try:
-            code_html=self.oscad.highlight_code(self.code)
-            if self.html_view is None:
-                self.html_view=ui.html(code_html)
-            else:
+            if self.code_area.visible:
+                self.code_area.visible=False
+                code_html=self.oscad.highlight_code(self.code)
                 self.html_view.content=code_html
-        except Exception as ex:
+                self.html_view.visible=True
+            else:
+                self.html_view.visible=False
+                self.code_area.visible=True
+        except BaseException as ex:
             self.handle_exception(ex, self.do_trace)
         
     def home(self):
@@ -262,6 +265,8 @@ example();"""
                             self.progress_view = ui.spinner('dots', size='lg', color='blue')
                             self.progress_view.visible = False
                             self.code_area = ui.textarea(value=self.code,on_change=self.code_changed).props('clearable').props("rows=25")
+                            self.html_view = ui.html()
+                            self.html_view.visible=False
                             self.log_view = ui.log(max_lines=20).classes('w-full h-40')        
         self.setup_footer()        
         if self.args.input:
