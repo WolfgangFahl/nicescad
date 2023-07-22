@@ -228,11 +228,14 @@ example();"""
         """
         highlight the code and show the html 
         """
-        code_html=self.oscad.highlight_code(self.code)
-        if self.html_view is None:
-            self.html_view=ui.html(code_html)
-        else:
-            self.html_view.content=code_html
+        try:
+            code_html=self.oscad.highlight_code(self.code)
+            if self.html_view is None:
+                self.html_view=ui.html(code_html)
+            else:
+                self.html_view.content=code_html
+        except Exception as ex:
+            self.handle_exception(ex, self.do_trace)
         
     def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
