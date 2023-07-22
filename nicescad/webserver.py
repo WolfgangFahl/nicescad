@@ -9,6 +9,7 @@ from nicescad.openscad import OpenScad
 from nicescad.local_filepicker import LocalFilePicker
 from nicegui import ui, app
 import asyncio
+from pathlib import Path
 import os
 import sys
 import requests
@@ -33,6 +34,7 @@ sphere(2,center=true);"""
         app.add_static_files('/stl', self.oscad.tmp_dir)
         self.log_view=None
         self.do_trace=True
+        self.html_view=None
 
         @ui.page('/')
         def home():
@@ -69,7 +71,7 @@ sphere(2,center=true);"""
         ui.notify("rendering ...")
         try:
             openscad_str = self.code_area.value
-            render_result= self.oscad.openscad_str_to_file(openscad_str)
+            render_result= await self.oscad.openscad_str_to_file_async(openscad_str)
             self.progressbar.value=0.5
             self.log_view.push(render_result.stderr)
             if render_result.returncode==0:
@@ -134,7 +136,7 @@ sphere(2,center=true);"""
             self.read_input(input_file)
     pass
 
-    def reload_file(self):
+    async def reload_file(self):
         """
         reload the input file
         """
@@ -168,9 +170,21 @@ sphere(2,center=true);"""
     
         Returns:
             The icon button object.
+            
+        valid icons may be found at:    
+            https://fonts.google.com/icons
         """
         icon=ui.icon(icon, color='primary').classes('text-4xl').tooltip(name).on("click",handler=handler)  
-        return icon    
+        return icon   
+    
+    def setup_pygments(self):
+        """
+        prepare pygments syntax highlighting by loading style
+        """
+        pygments_css_file=(Path(__file__).parent / 'web'/'static' / 'css'/ 'pygments.css')
+        pygments_css= pygments_css_file.read_text()
+        ui.add_head_html(f"<style>{pygments_css}</style>")
+ 
         
     def setup_menu(self):
         """Adds a link to the project's GitHub page in the web server's menu."""
@@ -202,9 +216,20 @@ sphere(2,center=true);"""
         """
         self.code=cargs.value
         pass
+    
+    def highlight_code(self,_cargs):
+        """
+        highlight the code and show the html 
+        """
+        code_html=self.oscad.highlight_code(self.code)
+        if self.html_view is None:
+            self.html_view=ui.html(code_html)
+        else:
+            self.html_view.content=code_html
         
     def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
+        self.setup_pygments()
         self.setup_menu()
         with ui.column():
             with ui.splitter() as splitter:
@@ -217,6 +242,7 @@ sphere(2,center=true);"""
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
+                            self.tool_button(name="highlight", icon="colorize", handler=self.highlight_code)    
                             self.tool_button(name="save",icon="save",handler=self.save_file)
                             self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
                             self.tool_button(name="open",icon="file_open",handler=self.open_file)
