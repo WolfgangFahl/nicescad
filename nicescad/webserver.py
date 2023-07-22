@@ -8,7 +8,6 @@ from nicescad.version import Version
 from nicescad.openscad import OpenScad
 from nicescad.local_filepicker import LocalFilePicker
 from nicegui import ui, app
-import asyncio
 from pathlib import Path
 import os
 import sys
@@ -36,7 +35,7 @@ module example() {
 }
 example();"""        
         self.input="example.scad"
-        self.is_local=True
+        self.is_local=False
         app.add_static_files('/stl', self.oscad.tmp_dir)
         self.log_view=None
         self.do_trace=True
@@ -136,11 +135,12 @@ example();"""
     
     async def open_file(self) -> None:
         """Opens a Local filer picker dialog and reads the selected input file."""
-        pick_list = await LocalFilePicker('~', multiple=False)
-        if len(pick_list)>0:
-            input_file=pick_list[0]
-            ui.notify(f'Opening {input_file}')
-            self.read_input(input_file)
+        if self.is_local:
+            pick_list = await LocalFilePicker('~', multiple=False)
+            if len(pick_list)>0:
+                input_file=pick_list[0]
+                ui.notify(f'Opening {input_file}')
+                self.read_input(input_file)
     pass
 
     async def reload_file(self):
@@ -250,9 +250,11 @@ example();"""
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
                             self.tool_button(name="highlight", icon="colorize", handler=self.highlight_code)    
-                            self.tool_button(name="save",icon="save",handler=self.save_file)
+                            if self.is_local:
+                                self.tool_button(name="save",icon="save",handler=self.save_file)
                             self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
-                            self.tool_button(name="open",icon="file_open",handler=self.open_file)
+                            if self.is_local:
+                                self.tool_button(name="open",icon="file_open",handler=self.open_file)
                             self.tool_button(name="render",icon="play_circle",handler=self.render)
                             self.progress_view = ui.spinner('dots', size='lg', color='blue')
                             self.progress_view.visible = False
@@ -277,4 +279,5 @@ example();"""
             args (list): The command line arguments.
         """
         self.args=args
-        ui.run(title=Version.name, host=args.host, port=args.port, reload=False)
+        self.is_local=args.local
+        ui.run(title=Version.name, host=args.host, port=args.port, show=args.client,reload=False)
