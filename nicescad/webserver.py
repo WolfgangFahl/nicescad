@@ -147,8 +147,20 @@ example();"""
         """
         reload the input file
         """
-        ui.notify(f"reloading {self.input} ...")
-        self.read_input(self.input)
+        allowed_urls=[
+            "https://raw.githubusercontent.com/WolfgangFahl/nicescad/main/examples/",
+            "https://raw.githubusercontent.com/openscad/openscad/master/examples/"
+        ]
+        if not self.is_local:
+            allowed=False
+            for allowed_url in allowed_urls:
+                if self.input.startswith(allowed_url):
+                    allowed=True
+        if not allowed:
+            ui.notify("only white listed URLs are allowed")
+        else:    
+            ui.notify(f"reloading {self.input} ...")
+            self.read_input(self.input)
     
     def link_button(self, name: str, target: str, icon_name: str):
         """
