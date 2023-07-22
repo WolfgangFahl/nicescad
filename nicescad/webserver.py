@@ -27,8 +27,14 @@ class WebServer:
         self.oscad = OpenScad(scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
 // default number o facets for arc generation
 $fn=30;""")
-        self.code="""cube(3,center=true);
-sphere(2,center=true);"""        
+        self.code="""// nicescad example
+module example() {
+  translate([0,0,15]) {
+     cube(30,center=true);
+     sphere(20);
+  }
+}
+example();"""        
         self.input="example.scad"
         self.is_local=True
         app.add_static_files('/stl', self.oscad.tmp_dir)
@@ -67,21 +73,22 @@ sphere(2,center=true);"""
         Args:
             click_args (object): The click event arguments.
         """
-        self.progressbar.visible = True
-        ui.notify("rendering ...")
         try:
+            self.progress_view.visible = True
+            ui.notify("rendering ...")
+            with self.scene:
+                self.scene.clear()
             openscad_str = self.code_area.value
             render_result= await self.oscad.openscad_str_to_file_async(openscad_str)
-            self.progressbar.value=0.5
+            # show render result in log
             self.log_view.push(render_result.stderr)
             if render_result.returncode==0:
                 ui.notify("stl created ... loading into scene")
                 with self.scene:
-                    self.scene.clear()
                     self.scene.stl("/stl/tmp.stl").move(x=0.0).scale(0.1)    
         except Exception as ex:
             self.handle_exception(ex,self.do_trace)  
-        self.progressbar.visible=False  
+        self.progress_view.visible=False  
             
     def do_read_input(self, input_str: str):
         """Reads the given input.
@@ -247,8 +254,8 @@ sphere(2,center=true);"""
                             self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
                             self.tool_button(name="open",icon="file_open",handler=self.open_file)
                             self.tool_button(name="render",icon="play_circle",handler=self.render)
-                            self.progressbar = ui.linear_progress(value=0).props('instant-feedback')
-                            self.progressbar.visible = False
+                            self.progress_view = ui.spinner('dots', size='lg', color='blue')
+                            self.progress_view.visible = False
                             self.code_area = ui.textarea(value=self.code,on_change=self.code_changed).props('clearable').props("rows=25")
                             self.log_view = ui.log(max_lines=20).classes('w-full h-40')        
         self.setup_footer()        
