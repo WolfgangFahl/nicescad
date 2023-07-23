@@ -17,9 +17,9 @@ class TestWebServer(Basetest):
         test getting the directory tree structure for
         the examples directory
         """
-        file_selector=FileSelector("../openscad_examples",".scad")
+        file_selector=FileSelector("../scad_examples",".scad")
         debug=self.debug
-        debug=True
+        #debug=True
         if debug:
             print(json.dumps(file_selector.tree_structure, sort_keys=True, indent=2))
         self.assertTrue("id" in file_selector.tree_structure)
