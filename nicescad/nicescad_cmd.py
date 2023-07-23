@@ -28,6 +28,7 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     parser.add_argument("-d", "--debug", dest="debug", action="store_true", help="show debug info [default: %(default)s]")
     parser.add_argument("-l", "--local", dest="local", action="store_true", help="run with local file system access [default: %(default)s]")
     parser.add_argument("-i", "--input", help="input file")
+    parser.add_argument("-rp", "--root_path",default=WebServer.examples_path(),help="path to scad files [default: %(default)s]")
 
     parser.add_argument("--host", default="localhost",
                             help="the host to serve / listen from [default: %(default)s]")

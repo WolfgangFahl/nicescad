@@ -3,7 +3,7 @@ Created on 2023-06-19
 
 @author: wf
 """
-from typing import List, Optional
+from typing import Dict, Optional, Union,List, Callable
 from nicescad.version import Version
 from nicescad.openscad import OpenScad
 from nicescad.local_filepicker import LocalFilePicker
@@ -13,6 +13,114 @@ import os
 import sys
 import requests
 import traceback
+from nicegui.events import ValueChangeEventArguments
+
+class FileSelector():
+    """
+    example handling
+    """
+    def __init__(self,path:str,extension: str,handler:Callable=None):
+        """
+        constructor
+        
+        Args:
+            path (str): The path to the directory to start building the tree from.
+            extension(str): the extension to filter for
+            handler(Callable): handler function to call on selection
+        """   
+        self.path=path
+        self.extension=extension 
+        self.handler=handler
+        # generate the tree structure
+        self.tree_structure,self.file_count = self.get_dir_tree(self.path,self.extension)
+
+        # create the ui.tree object
+        ui.tree([self.tree_structure], label_key='label', on_select=self.select_file)
+         
+    def file_by_id(self, tree: Dict[str, Union[str, List[Dict]]], id_to_find: str) -> Optional[str]:
+        """
+        Recursive function to find a file by its ID in a directory tree.
+    
+        Args:
+            tree (dict): A dictionary representing the directory tree. The tree is constructed with each node 
+                containing 'id' (str) as a unique identifier, 'value' (str) as the path to the file or directory,
+                and 'children' (list of dict) as a list of child nodes.
+            id_to_find (str): The ID of the file to find in the directory tree.
+    
+        Returns:
+            str: The 'value' (file path) associated with the found ID. Returns None if the ID is not found.
+            
+        """
+        if tree['id'] == id_to_find:
+            return tree['value']
+        
+        for child in tree.get('children', []):
+            found = self.file_by_id(child, id_to_find)
+            if found:
+                return found
+                
+        return None
+
+    
+    def select_file(self,vcea:ValueChangeEventArguments):
+        """
+        select the given file and call my handler on the file path of it
+        
+        Args:
+            vcea(ValueChangeEventArguments): the tree selection event
+        """
+        id_to_find = vcea.value  # Assuming vcea.value contains the id
+        file_path=self.file_by_id(self.tree_structure, id_to_find)
+        if file_path is None:
+            raise ValueError(f"No item with id {id_to_find} found in the tree structure.")
+        if self.handler:
+            self.handler(file_path) 
+
+    def get_dir_tree(self, path: str, extension: str, id_path: List[int]=[1], file_counter: int = 1) -> Optional[Dict[str, dict]]:
+        """
+        Recursive function to construct a directory tree.
+    
+        Args:
+            path (str): The path to the directory to start building the tree from.
+            extension(str): the extension to filter for
+            id_path (List[int]): List of integers representing the current path in the tree.
+            file_counter (int): Counter for files with the given extension.
+    
+        Returns:
+            dict: A dictionary representing the directory tree. For each directory or .scad file found,
+            it will add a dictionary to the 'children' list of its parent directory's dictionary.
+        """
+        path = os.path.abspath(path)
+        id_string = '.'.join(map(str, id_path))
+        items = os.listdir(path)
+        children = []
+        
+        for name in items:
+            item_path = os.path.join(path, name)
+            child_id_string = '.'.join(map(str, id_path + [file_counter]))
+    
+            if os.path.isdir(item_path):
+                dir_tree, file_counter = self.get_dir_tree(item_path, extension, id_path, file_counter)
+                if dir_tree:
+                    children.append(dir_tree)
+            elif name.endswith(extension):
+                children.append({
+                    'id': child_id_string,
+                    'label': name,
+                    'value': item_path
+                })
+                file_counter += 1
+    
+        if children or any(name.endswith(extension) for name in items):
+            return {
+                'id': id_string,
+                'label': os.path.basename(path),
+                'value': path,
+                'children': children
+            }, file_counter
+        else:
+            return None, file_counter
+
 
 class WebServer:
     """WebServer class that manages the server and handles OpenScad operations.
@@ -40,7 +148,7 @@ example();"""
         self.log_view=None
         self.do_trace=True
         self.html_view=None
-
+ 
         @ui.page('/')
         def home():
             self.home()
@@ -50,6 +158,13 @@ example();"""
             self.settings()
             
             
+    @classmethod
+    def examples_path(cls)->str:
+        # the root directory (default: examples)
+        path = os.path.join(os.path.dirname(__file__), '../examples')
+        return path
+ 
+ 
     def handle_exception(self, e: BaseException, trace: Optional[bool] = False):
         """Handles an exception by creating an error message.
 
@@ -65,6 +180,7 @@ example();"""
             self.log_view.push(self.error_msg)
         print(self.error_msg,file=sys.stderr)
 
+    
         
     async def render(self, _click_args):
         """Renders the OpenScad string and updates the 3D scene with the result.
@@ -115,6 +231,7 @@ example();"""
             input (str): The input string representing a URL or local file.
         """
         try:
+            ui.notify(f"reading {input}")
             self.code = self.do_read_input(input)
             self.input_input.set_value(input)
             self.code_area.set_value(self.code)
@@ -161,6 +278,11 @@ example();"""
         else:    
             ui.notify(f"reloading {self.input} ...")
             self.read_input(self.input)
+            
+    def select_example(self,ts):
+        """
+        """
+        pass
     
     def link_button(self, name: str, target: str, icon_name: str):
         """
@@ -264,6 +386,7 @@ example();"""
                         scene.spot_light(distance=100, intensity=0.2).move(-10, 0, 10)
                     with splitter.after:
                         with ui.element("div").classes("w-full"):
+                            self.example_selector=FileSelector(path=self.root_path,extension=".scad",handler=self.read_input)
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
@@ -300,4 +423,5 @@ example();"""
         """
         self.args=args
         self.is_local=args.local
+        self.root_path=args.root_path 
         ui.run(title=Version.name, host=args.host, port=args.port, show=args.client,reload=False)

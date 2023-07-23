@@ -49,6 +49,5 @@ class TestOpenScad(Basetest):
         if debug:
             print(highlighted_code)
         self.assertTrue(highlighted_code.startswith('<div'))
-    
 
         
