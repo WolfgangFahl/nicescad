@@ -17,7 +17,7 @@ class TestWebServer(Basetest):
         test getting the directory tree structure for
         the examples directory
         """
-        file_selector=FileSelector("../scad_examples",".scad")
+        file_selector=FileSelector(WebServer.examples_path(),".scad")
         debug=self.debug
         #debug=True
         if debug:
