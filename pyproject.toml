@@ -56,8 +56,11 @@ test = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = [
-  "nicescad",
-]
+only-include = ["nicescad","scad_examples"]
+
+[tool.hatch.build.targets.wheel.sources]
+"nicescad" = "nicescad"
+"scad_examples" = "scad_examples"
+
 [project.scripts]
 nicescad = "nicescad.nicescad_cmd:main"

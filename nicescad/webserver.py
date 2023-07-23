@@ -161,7 +161,7 @@ example();"""
     @classmethod
     def examples_path(cls)->str:
         # the root directory (default: examples)
-        path = os.path.join(os.path.dirname(__file__), '../examples')
+        path = os.path.join(os.path.dirname(__file__), '../scad_examples')
         return path
  
  
