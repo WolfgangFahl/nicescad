@@ -6,6 +6,7 @@ Created on 2023-06-19
 from typing import Optional
 from nicescad.version import Version
 from nicescad.openscad import OpenScad
+from nicescad.axes_helper import AxesHelper
 from nicescad.file_selector import FileSelector
 from nicescad.local_filepicker import LocalFilePicker
 from nicegui import ui, app
@@ -47,6 +48,7 @@ example();"""
         self.log_view=None
         self.do_trace=True
         self.html_view=None
+        self.axes_view=None
  
         @ui.page('/')
         async def home():
@@ -212,14 +214,16 @@ example();"""
             button.on("click",lambda: (ui.open(target)))
         return button
     
-    def tool_button(self,name:str,icon:str,handler:callable)->ui.button:
+    
+    def tool_button(self,tooltip:str,icon:str,handler:callable=None,toggle_icon:str=None)->ui.button:
         """
         Creates an  button with icon that triggers a specified function upon being clicked.
     
         Args:
-            name (str): The name of the button (not displayed, but could be used for identification).
+            tooltip (str): The tooltip to be displayed.
             icon (str): The name of the icon to be displayed on the button.
             handler (function): The function to be called when the button is clicked.
+            toggle_icon (str): The name of an alternative icon to be displayed when the button is clicked.
     
         Returns:
             ui.button: The icon button object.
@@ -227,7 +231,8 @@ example();"""
         valid icons may be found at:    
             https://fonts.google.com/icons
         """
-        icon_button=ui.button("",icon=icon, color='primary').tooltip(name).on("click",handler=handler)  
+        icon_button=ui.button("",icon=icon, color='primary').tooltip(tooltip).on("click",handler=handler)  
+        icon_button.toggle_icon=toggle_icon
         return icon_button   
     
     def setup_pygments(self):
@@ -270,6 +275,21 @@ example();"""
         self.code=cargs.value
         pass
     
+    def toggle_icon(self,button:ui.button):
+        """
+        toggle the icon of the given button
+        
+        Args:
+            ui.button: the button that needs the icon to be toggled
+        """
+        if hasattr(button,"toggle_icon"):
+            # exchange icon with toggle icon
+            toggle_icon=button._props["icon"]
+            icon=button.toggle_icon
+            button._props["icon"]=icon
+            button.toggle_icon=toggle_icon
+        button.update()
+    
     async def highlight_code(self,_cargs):
         """
         highlight the code and show the html 
@@ -280,12 +300,10 @@ example();"""
                 code_html=self.oscad.highlight_code(self.code)
                 self.html_view.content=code_html
                 self.html_view.visible=True
-                self.highlight_button._props["icon"]="code"
             else:
                 self.html_view.visible=False
                 self.code_area.visible=True
-                self.highlight_button._props["icon"]="html"
-            self.highlight_button.update()    
+            self.toggle_icon(self.highlight_button)  
         except BaseException as ex:
             self.handle_exception(ex, self.do_trace)
         
@@ -309,6 +327,15 @@ example();"""
             self.stl_object.material(f'{e.color}')
         pass
     
+    async def toggle_axes(self):
+        """
+        toggle the axes of my scene
+        """
+        self.toggle_icon(self.axes_button)
+        if self.axes_view is None:
+            self.axes_view=AxesHelper(self.scene)
+        pass
+    
     async def toggle_grid(self,_ea):
         """
         toogle the grid of my scene
@@ -322,9 +349,7 @@ example();"""
             self.scene._props["grid"]=grid
             self.scene.update()
             # try toggling icon
-            grid_str="off" if grid else "on"
-            self.grid_button._props["icon"]=f"grid_{grid_str}"
-            self.grid_button.update()
+            self.toggle_icon(self.grid_button)
         except BaseException as ex:
             self.handleExeption(ex)
         pass
@@ -336,7 +361,8 @@ example();"""
         with ui.column():
             with ui.splitter() as splitter:
                 with splitter.before:
-                    self.grid_button=ui.button(on_click=self.toggle_grid,icon='grid_off')
+                    self.grid_button=self.tool_button("toggle grid",handler=self.toggle_grid,icon='grid_off',toggle_icon='grid_on')
+                    self.axes_button=self.tool_button("toggle axes",icon="polyline",toggle_icon="square",handler=self.toggle_axes)
                     self.color_picker_button=ui.button(icon='colorize')      
                     self.color_picker = ui.color_picker(on_pick=self.pick_color)
                     self.color_picker_button.disable()
@@ -350,13 +376,13 @@ example();"""
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
-                            self.highlight_button=self.tool_button(name="highlight", icon="html", handler=self.highlight_code)    
+                            self.highlight_button=self.tool_button(tooltip="highlight", icon="html", toggle_icon="code",handler=self.highlight_code)    
                             if self.is_local:
-                                self.tool_button(name="save",icon="save",handler=self.save_file)
-                            self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
+                                self.tool_button(tooltip="save",icon="save",handler=self.save_file)
+                            self.tool_button(tooltip="reload",icon="refresh",handler=self.reload_file)
                             if self.is_local:
-                                self.tool_button(name="open",icon="file_open",handler=self.open_file)
-                            self.tool_button(name="render",icon="play_circle",handler=self.render)
+                                self.tool_button(tooltip="open",icon="file_open",handler=self.open_file)
+                            self.tool_button(tooltip="render",icon="play_circle",handler=self.render)
                             self.stl_link=ui.link("stl result",f"/stl/{self.stl_name}",new_tab=True)
                             self.stl_link.visible=False
                             self.progress_view = ui.spinner('dots', size='lg', color='blue')
