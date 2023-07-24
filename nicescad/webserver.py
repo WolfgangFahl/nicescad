@@ -310,11 +310,14 @@ example();"""
         """
         toogle the grid of my scene
         """
-        grid=self.scene._props["grid"]
-        grid_str="off" if grid else "on"
-        ui.notify(f"setting grid to {grid_str}")
-        self.scene._props["grid"]=not grid
-        self.scene.update()
+        try:
+            grid=self.scene._props["grid"]
+            grid_str="off" if grid else "on"
+            ui.notify(f"setting grid to {grid_str}")
+            self.scene._props["grid"]=not grid
+            self.scene.update()
+        except BaseException as ex:
+            self.handleExeption(ex)
         pass
         
     async def home(self):
