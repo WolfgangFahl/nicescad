@@ -61,8 +61,8 @@ example();"""
     def examples_path(cls)->str:
         # the root directory (default: examples)
         path = os.path.join(os.path.dirname(__file__), '../scad_examples')
+        path = os.path.abspath(path)
         return path
- 
  
     def handle_exception(self, e: BaseException, trace: Optional[bool] = False):
         """Handles an exception by creating an error message.
@@ -176,24 +176,25 @@ example();"""
         """
         reload the input file
         """
+        input_str=self.input
+        if os.path.exists(input_str):
+            input_str=os.path.abspath(input_str)
         allowed_urls=[
             "https://raw.githubusercontent.com/WolfgangFahl/nicescad/main/examples/",
-            "https://raw.githubusercontent.com/openscad/openscad/master/examples/"
+            "https://raw.githubusercontent.com/openscad/openscad/master/examples/",
+            self.examples_path(),
+            self.root_path
         ]
         if not self.is_local:
             allowed=False
             for allowed_url in allowed_urls:
-                if self.input.startswith(allowed_url):
+                if input_str.startswith(allowed_url):
                     allowed=True
         if not allowed:
-            ui.notify("only white listed URLs are allowed")
+            ui.notify("only white listed URLs and Path inputs are allowed")
         else:    
             await self.read_and_optionally_render(self.input)
             
-    def select_example(self,ts):
-        """
-        """
-        pass
     
     def link_button(self, name: str, target: str, icon_name: str):
         """
@@ -304,6 +305,17 @@ example();"""
         if self.stl_object:
             self.stl_object.material(f'{e.color}')
         pass
+    
+    async def toggle_grid(self,_ea):
+        """
+        toogle the grid of my scene
+        """
+        grid=self.scene._props["grid"]
+        grid_str="off" if grid else "on"
+        ui.notify(f"setting grid to {grid_str}")
+        self.scene._props["grid"]=not grid
+        self.scene.update()
+        pass
         
     async def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
@@ -315,6 +327,8 @@ example();"""
                     self.color_picker = ui.color_picker(on_pick=self.pick_color)
                     self.color_picker_button=ui.button(on_click=self.color_picker.open, icon='colorize')      
                     self.color_picker_button.disable()
+                    self.grid_button=ui.button(on_click=self.toggle_grid,icon='grid_on');
+                    
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
                         self.scene = scene
                         scene.spot_light(distance=100, intensity=0.2).move(-10, 0, 10)
@@ -360,6 +374,6 @@ example();"""
         """
         self.args=args
         self.is_local=args.local
-        self.root_path=args.root_path 
+        self.root_path=os.path.abspath(args.root_path) 
         self.render_on_load=args.render_on_load
         ui.run(title=Version.name, host=args.host, port=args.port, show=args.client,reload=False)
