@@ -14,6 +14,12 @@ class AxesHelper:
     3. Usage of `nicegui` library's API for the colors.
     4. Include Google docstrings and type hints to the code.
     5. The scene should be a constructor parameter to be remembered.
+    6. The Axes should be named x, y and z.
+    7. The `set_colors` method should be called in the constructor.
+    8. Use `with self.scene as scene` when drawing the lines.
+
+    Date: 2023-07-24
+    @author: OpenAI's ChatGPT
 
     Attributes:
         size (float): The size of the axes to be drawn.
@@ -21,11 +27,11 @@ class AxesHelper:
 
     Usage:
         scene = ui.scene().classes('w-full h-64')
-        axes_helper = AxesHelper(scene, size=10.0)
+        axes_helper = AxesHelper(scene, size=1)
         axes_helper.set_colors('#FF0000', '#00FF00', '#0000FF') # set colors for x, y, and z axes
 
     """
-    def __init__(self, scene: "ui.scene", size: float = 10):
+    def __init__(self, scene: "ui.scene", size: float = 1):
         """
         The constructor for AxesHelper class.
 
@@ -40,16 +46,18 @@ class AxesHelper:
             (0, 0, 0),    (0, 0, size)
         ]
 
-        # red / green / blue
-        self.colors = ['#FF0000', '#00FF00', '#0000FF']
+        self.axis_names = ['x', 'y', 'z']
         self.lines = []
 
         # Draw lines in the scene to represent axes
         with self.scene as scene:
             for i in range(0, len(self.vertices), 2):
-                color_index=i//2
-                self.lines.append(scene.line(self.vertices[i], self.vertices[i+1]).material(self.colors[color_index]))
-            scene.update()    
+                line=scene.line(self.vertices[i], self.vertices[i+1])
+                self.lines.append(line)
+                line.name=self.axis_names[i//2]   
+                pass               
+
+        self.set_colors('#FF0000', '#00FF00', '#0000FF')  # set initial colors
 
     def set_colors(self, x_axis_color: str, y_axis_color: str, z_axis_color: str):
         """
