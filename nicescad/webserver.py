@@ -212,9 +212,9 @@ example();"""
             button.on("click",lambda: (ui.open(target)))
         return button
     
-    def tool_button(self,name:str,icon:str,handler:callable):
+    def tool_button(self,name:str,icon:str,handler:callable)->ui.button:
         """
-        Creates an icon button that triggers a specified function upon being clicked.
+        Creates an  button with icon that triggers a specified function upon being clicked.
     
         Args:
             name (str): The name of the button (not displayed, but could be used for identification).
@@ -222,13 +222,13 @@ example();"""
             handler (function): The function to be called when the button is clicked.
     
         Returns:
-            The icon button object.
+            ui.button: The icon button object.
             
         valid icons may be found at:    
             https://fonts.google.com/icons
         """
-        icon=ui.icon(icon, color='primary').classes('text-4xl').tooltip(name).on("click",handler=handler)  
-        return icon   
+        icon_button=ui.button("",icon=icon, color='primary').tooltip(name).on("click",handler=handler)  
+        return icon_button   
     
     def setup_pygments(self):
         """
@@ -270,7 +270,7 @@ example();"""
         self.code=cargs.value
         pass
     
-    def highlight_code(self,_cargs):
+    async def highlight_code(self,_cargs):
         """
         highlight the code and show the html 
         """
@@ -280,9 +280,12 @@ example();"""
                 code_html=self.oscad.highlight_code(self.code)
                 self.html_view.content=code_html
                 self.html_view.visible=True
+                self.highlight_button._props["icon"]="code"
             else:
                 self.html_view.visible=False
                 self.code_area.visible=True
+                self.highlight_button._props["icon"]="html"
+            self.highlight_button.update()    
         except BaseException as ex:
             self.handle_exception(ex, self.do_trace)
         
@@ -313,9 +316,15 @@ example();"""
         try:
             grid=self.scene._props["grid"]
             grid_str="off" if grid else "on"
+            # try toggling grid
             ui.notify(f"setting grid to {grid_str}")
-            self.scene._props["grid"]=not grid
+            grid=not grid
+            self.scene._props["grid"]=grid
             self.scene.update()
+            # try toggling icon
+            grid_str="off" if grid else "on"
+            self.grid_button._props["icon"]=f"grid_{grid_str}"
+            self.grid_button.update()
         except BaseException as ex:
             self.handleExeption(ex)
         pass
@@ -330,7 +339,7 @@ example();"""
                     self.color_picker = ui.color_picker(on_pick=self.pick_color)
                     self.color_picker_button=ui.button(on_click=self.color_picker.open, icon='colorize')      
                     self.color_picker_button.disable()
-                    self.grid_button=ui.button(on_click=self.toggle_grid,icon='grid_on');
+                    self.grid_button=ui.button(on_click=self.toggle_grid,icon='grid_off');
                     
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
                         self.scene = scene
@@ -341,7 +350,7 @@ example();"""
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
-                            self.tool_button(name="highlight", icon="html", handler=self.highlight_code)    
+                            self.highlight_button=self.tool_button(name="highlight", icon="html", handler=self.highlight_code)    
                             if self.is_local:
                                 self.tool_button(name="save",icon="save",handler=self.save_file)
                             self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
