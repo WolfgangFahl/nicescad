@@ -3,126 +3,19 @@ Created on 2023-06-19
 
 @author: wf
 """
-from typing import Dict, Optional, Union,List, Callable
+from typing import Optional
 from nicescad.version import Version
 from nicescad.openscad import OpenScad
+from nicescad.file_selector import FileSelector
 from nicescad.local_filepicker import LocalFilePicker
 from nicegui import ui, app
 from pathlib import Path
-import inspect
+
 import os
 import sys
 import requests
 import traceback
-from nicegui.events import ValueChangeEventArguments, ColorPickEventArguments
-
-class FileSelector():
-    """
-    example handling
-    """
-    def __init__(self,path:str,extension: str,handler:Callable=None):
-        """
-        constructor
-        
-        Args:
-            path (str): The path to the directory to start building the tree from.
-            extension(str): the extension to filter for
-            handler(Callable): handler function to call on selection
-        """   
-        self.path=path
-        self.extension=extension 
-        self.handler=handler
-        # generate the tree structure
-        self.tree_structure,self.file_count = self.get_dir_tree(self.path,self.extension)
-
-        # create the ui.tree object
-        ui.tree([self.tree_structure], label_key='label', on_select=self.select_file)
-         
-    def file_by_id(self, tree: Dict[str, Union[str, List[Dict]]], id_to_find: str) -> Optional[str]:
-        """
-        Recursive function to find a file by its ID in a directory tree.
-    
-        Args:
-            tree (dict): A dictionary representing the directory tree. The tree is constructed with each node 
-                containing 'id' (str) as a unique identifier, 'value' (str) as the path to the file or directory,
-                and 'children' (list of dict) as a list of child nodes.
-            id_to_find (str): The ID of the file to find in the directory tree.
-    
-        Returns:
-            str: The 'value' (file path) associated with the found ID. Returns None if the ID is not found.
-            
-        """
-        if tree['id'] == id_to_find:
-            return tree['value']
-        
-        for child in tree.get('children', []):
-            found = self.file_by_id(child, id_to_find)
-            if found:
-                return found
-                
-        return None
-    
-    async def select_file(self,vcea:ValueChangeEventArguments):
-        """
-        select the given file and call my handler on the file path of it
-        
-        Args:
-            vcea(ValueChangeEventArguments): the tree selection event
-        """
-        id_to_find = vcea.value  # Assuming vcea.value contains the id
-        file_path=self.file_by_id(self.tree_structure, id_to_find)
-        if file_path is None:
-            raise ValueError(f"No item with id {id_to_find} found in the tree structure.")
-        if self.handler:
-            if inspect.iscoroutinefunction(self.handler):
-                await self.handler(file_path)
-            else:
-                self.handler(file_path) 
-
-    def get_dir_tree(self, path: str, extension: str, id_path: List[int]=[1], file_counter: int = 1) -> Optional[Dict[str, dict]]:
-        """
-        Recursive function to construct a directory tree.
-    
-        Args:
-            path (str): The path to the directory to start building the tree from.
-            extension(str): the extension to filter for
-            id_path (List[int]): List of integers representing the current path in the tree.
-            file_counter (int): Counter for files with the given extension.
-    
-        Returns:
-            dict: A dictionary representing the directory tree. For each directory or .scad file found,
-            it will add a dictionary to the 'children' list of its parent directory's dictionary.
-        """
-        path = os.path.abspath(path)
-        id_string = '.'.join(map(str, id_path))
-        items = os.listdir(path)
-        children = []
-        
-        for name in items:
-            item_path = os.path.join(path, name)
-            child_id_string = '.'.join(map(str, id_path + [file_counter]))
-    
-            if os.path.isdir(item_path):
-                dir_tree, file_counter = self.get_dir_tree(item_path, extension, id_path, file_counter)
-                if dir_tree:
-                    children.append(dir_tree)
-            elif name.endswith(extension):
-                children.append({
-                    'id': child_id_string,
-                    'label': name,
-                    'value': item_path
-                })
-                file_counter += 1
-    
-        if children or any(name.endswith(extension) for name in items):
-            return {
-                'id': id_string,
-                'label': os.path.basename(path),
-                'value': path,
-                'children': children
-            }, file_counter
-        else:
-            return None, file_counter
+from nicegui.events import ColorPickEventArguments
 
 
 class WebServer:
