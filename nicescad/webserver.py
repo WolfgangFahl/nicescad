@@ -14,7 +14,7 @@ import os
 import sys
 import requests
 import traceback
-from nicegui.events import ValueChangeEventArguments
+from nicegui.events import ValueChangeEventArguments, ColorPickEventArguments
 
 class FileSelector():
     """
@@ -148,6 +148,7 @@ module example() {
 example();"""        
         self.input="example.scad"
         self.stl_name="result.stl"
+        self.stl_object=None
         self.is_local=False
         app.add_static_files('/stl', self.oscad.tmp_dir)
         self.log_view=None
@@ -197,6 +198,7 @@ example();"""
             with self.scene:
                 self.scene.clear()
                 self.stl_link.visible=False
+                self.color_picker_button.disable()
             openscad_str = self.code_area.value
             stl_path=stl_path = os.path.join(self.oscad.tmp_dir, self.stl_name) 
             render_result= await self.oscad.openscad_str_to_file(openscad_str,stl_path)
@@ -205,8 +207,9 @@ example();"""
             if render_result.returncode==0:
                 ui.notify("stl created ... loading into scene")
                 self.stl_link.visible=True
+                self.color_picker_button.enable()
                 with self.scene:
-                    self.scene.stl(f"/stl/{self.stl_name}").move(x=0.0).scale(0.1)    
+                    self.stl_object=self.scene.stl(f"/stl/{self.stl_name}").move(x=0.0).scale(0.1)    
         except BaseException as ex:
             self.handle_exception(ex,self.do_trace)  
         self.progress_view.visible=False  
@@ -389,6 +392,26 @@ example();"""
         except BaseException as ex:
             self.handle_exception(ex, self.do_trace)
         
+    async def pick_color(self,e:ColorPickEventArguments):
+        """
+        Asynchronously picks a color based on provided event arguments.
+    
+        This function changes the color of the 'color_picker_button' and the 'stl_object'
+        according to the color specified in the event arguments.
+    
+        Args:
+            e (ColorPickEventArguments): An object containing event-specific arguments.
+                The 'color' attribute of this object specifies the color to be applied.
+    
+        Note:
+            If 'stl_object' is None, the function will only change the color of 'color_picker_button'.
+            Otherwise, it changes the color of both 'color_picker_button' and 'stl_object'.
+        """
+        self.color_picker_button.style(f'background-color:{e.color}!important')
+        if self.stl_object:
+            self.stl_object.material(f'{e.color}')
+        pass
+        
     async def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
         self.setup_pygments()
@@ -396,6 +419,9 @@ example();"""
         with ui.column():
             with ui.splitter() as splitter:
                 with splitter.before:
+                    self.color_picker = ui.color_picker(on_pick=self.pick_color)
+                    self.color_picker_button=ui.button(on_click=self.color_picker.open, icon='colorize')      
+                    self.color_picker_button.disable()
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
                         self.scene = scene
                         scene.spot_light(distance=100, intensity=0.2).move(-10, 0, 10)
@@ -405,7 +431,7 @@ example();"""
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
-                            self.tool_button(name="highlight", icon="colorize", handler=self.highlight_code)    
+                            self.tool_button(name="highlight", icon="html", handler=self.highlight_code)    
                             if self.is_local:
                                 self.tool_button(name="save",icon="save",handler=self.save_file)
                             self.tool_button(name="reload",icon="refresh",handler=self.reload_file)
