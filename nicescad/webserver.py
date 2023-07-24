@@ -334,6 +334,8 @@ example();"""
         self.toggle_icon(self.axes_button)
         if self.axes_view is None:
             self.axes_view=AxesHelper(self.scene)
+        else:
+            self.axes_view.toggle_axes()
         pass
     
     async def toggle_grid(self,_ea):
