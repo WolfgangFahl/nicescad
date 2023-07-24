@@ -336,10 +336,10 @@ example();"""
         with ui.column():
             with ui.splitter() as splitter:
                 with splitter.before:
+                    self.grid_button=ui.button(on_click=self.toggle_grid,icon='grid_off')
+                    self.color_picker_button=ui.button(icon='colorize')      
                     self.color_picker = ui.color_picker(on_pick=self.pick_color)
-                    self.color_picker_button=ui.button(on_click=self.color_picker.open, icon='colorize')      
                     self.color_picker_button.disable()
-                    self.grid_button=ui.button(on_click=self.toggle_grid,icon='grid_off');
                     
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
                         self.scene = scene
