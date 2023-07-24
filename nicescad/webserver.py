@@ -135,7 +135,7 @@ class WebServer:
     def __init__(self):
         """Constructs all the necessary attributes for the WebServer object."""
         self.oscad = OpenScad(scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
-// default number o facets for arc generation
+// default number of facets for arc generation
 $fn=30;
 """)
         self.code="""// nicescad example
@@ -253,6 +253,7 @@ example();"""
             self.code_area.set_value(self.code)
             self.log_view.clear()
             self.error_msg = None
+            self.stl_link.visible=False
         except BaseException as e:
             self.code = None
             self.handle_exception(e, self.do_trace)
@@ -411,7 +412,7 @@ example();"""
                             if self.is_local:
                                 self.tool_button(name="open",icon="file_open",handler=self.open_file)
                             self.tool_button(name="render",icon="play_circle",handler=self.render)
-                            self.stl_link=ui.link("stl result",f"/stl/{self.stl_name}")
+                            self.stl_link=ui.link("stl result",f"/stl/{self.stl_name}",new_tab=True)
                             self.stl_link.visible=False
                             self.progress_view = ui.spinner('dots', size='lg', color='blue')
                             self.progress_view.visible = False
