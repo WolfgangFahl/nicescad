@@ -5,15 +5,14 @@ Created on 2023-07-19
 
 This module contains the class OpenScad, a wrapper for OpenScad.
 """
-
-from typing import Dict
+from typing import Awaitable
 import tempfile
 import os
 import platform
 from nicescad.process import Subprocess
 
-from pygments.lexer import RegexLexer, bygroups
-from pygments.token import *
+from pygments.lexer import RegexLexer
+from pygments.token import Comment,Keyword,Name,Number,Operator, Punctuation,String,Text
 from pygments import highlight
 from pygments.formatters.html import HtmlFormatter
 
@@ -113,61 +112,52 @@ class OpenScad:
             self._try_executable(os.path.join(os.environ.get('Programfiles(x86)', 'C:'), 'OpenSCAD\\openscad.exe'))
             self._try_executable(os.path.join(os.environ.get('Programfiles', 'C:'), 'OpenSCAD\\openscad.exe'))
 
-
-    def write_to_tmp_file(self, openscad_str: str):
+    def write_to_tmp_file(self, openscad_str: str, do_prepend: bool=True):
         """
-        Writes an OpenSCAD string to a temporary file.
-
+        Writes an OpenSCAD string to a temporary file. 
+    
+        The `scad_prepend` string is prepended to the OpenSCAD code before writing, 
+        unless the OpenSCAD code contains the string '//!OpenSCAD', or `do_prepend` 
+        is set to `False`. In these cases, only the OpenSCAD code is written to the file.
+    
         Args:
             openscad_str (str): The OpenSCAD code.
+            do_prepend (bool, optional): If `True`, the `scad_prepend` string is 
+                                          prepended to the OpenSCAD code. Defaults to `True`.
         
         Returns:
-            scad_tmp_file: The temporary file path.
+            str: The path to the temporary file where the OpenSCAD code (and 
+                 possibly the `scad_prepend` string) was written.
         """
         scad_tmp_file = os.path.join(self.tmp_dir, 'tmp.scad')
         with open(scad_tmp_file, 'w') as of:
-            of.write(self.scad_prepend)
+            if do_prepend and '//!OpenSCAD' not in openscad_str:
+                of.write(self.scad_prepend)
             of.write(openscad_str)
         return scad_tmp_file
 
-    async def render_to_file_async(self, openscad_str: str, fl_name: str) -> Subprocess:
+
+    async def render_to_file_async(self, openscad_str: str, stl_path: str) -> Awaitable[Subprocess]:
         """
         Asynchronously renders an OpenSCAD string to a file.
 
         Args:
             openscad_str (str): The OpenSCAD code.
-            fl_name (str): The name of the output file.
+            stl_path(str): The path to the output file.
         
-        Raises:
+        Returns:
             Subprocess: the openscad execution result
         """
         scad_tmp_file = self.write_to_tmp_file(openscad_str)
 
         # now run openscad to generate stl:
-        cmd = [self.openscad_exec, '-o', fl_name, scad_tmp_file]
+        cmd = [self.openscad_exec, '-o', stl_path, scad_tmp_file]
+        self.saved_umask = os.umask(0o077)
         result = await Subprocess.run_async(cmd)
+        os.umask(self.saved_umask)
 
         self.cleanup_tmp_file(result, scad_tmp_file)
-        return result
-
-    def render_to_file(self, openscad_str: str, fl_name: str) -> Subprocess:
-        """
-        Renders an OpenSCAD string to a file.
-
-        Args:
-            openscad_str (str): The OpenSCAD code.
-            fl_name (str): The name of the output file.
-        
-        Raises:
-            Subprocess: the openscad execution result
-        """
-        scad_tmp_file = self.write_to_tmp_file(openscad_str)
-
-        # now run openscad to generate stl:
-        cmd = [self.openscad_exec, '-o', fl_name, scad_tmp_file]
-        result = Subprocess.run(cmd)
-
-        self.cleanup_tmp_file(result, scad_tmp_file)
+        result.stl_path=stl_path
         return result
 
     def cleanup_tmp_file(self, result, scad_tmp_file):
@@ -184,54 +174,16 @@ class OpenScad:
         else:
             result.scad_tmp_file = scad_tmp_file
 
-    async def openscad_str_to_file_async(self, openscad_str: str, **kwargs) -> Subprocess:
-        """
-        Asynchronously renders the OpenSCAD code to a file.
-    
-        Args:
-            openscad_str (str): The OpenSCAD code.
-            **kwargs: Additional arguments, could include 'outfile' to specify the output file name.
-    
-        Returns:
-            Subprocess: The result of the subprocess run, encapsulated in a Subprocess object.
-        """
-        return await self.render_cleanup_wrapper(self.render_to_file_async, openscad_str, **kwargs)
-
-    def openscad_str_to_file(self, openscad_str: str, **kwargs) -> Subprocess:
+    async def openscad_str_to_file(self, openscad_str: str, stl_path:str) -> Subprocess:
         """
         Renders the OpenSCAD code to a file.
     
         Args:
             openscad_str (str): The OpenSCAD code.
-            **kwargs: Additional arguments, could include 'outfile' to specify the output file name.
+            stl_path(str): the path to the stl file
     
         Returns:
             Subprocess: The result of the subprocess run, encapsulated in a Subprocess object.
         """
-        return self.render_cleanup_wrapper(self.render_to_file, openscad_str, **kwargs)
-
-    def render_cleanup_wrapper(self, render_func, openscad_str: str, **kwargs):
-        """
-        Wrapper function to perform rendering and cleanup tasks.
-
-        Args:
-            render_func (function): The rendering function to use (either synchronous or asynchronous).
-            openscad_str (str): The OpenSCAD code.
-            **kwargs: Additional arguments, could include 'outfile' to specify the output file name.
-
-        Returns:
-            result: The result of the rendering function.
-        """
-        self.saved_umask = os.umask(0o077)
-        try:
-            if 'outfile' in kwargs:
-                openscad_out_file = kwargs['outfile']
-            else:
-                openscad_out_file = os.path.join(self.tmp_dir, 'tmp.stl')                    
-
-            result = render_func(openscad_str, openscad_out_file, **kwargs)
-
-            return result
-        finally:
-            os.umask(self.saved_umask)
-
+        result=await self.render_to_file_async(openscad_str, stl_path)
+        return result

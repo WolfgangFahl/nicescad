@@ -9,6 +9,7 @@ from nicescad.openscad import OpenScad
 from nicescad.local_filepicker import LocalFilePicker
 from nicegui import ui, app
 from pathlib import Path
+import inspect
 import os
 import sys
 import requests
@@ -60,9 +61,8 @@ class FileSelector():
                 return found
                 
         return None
-
     
-    def select_file(self,vcea:ValueChangeEventArguments):
+    async def select_file(self,vcea:ValueChangeEventArguments):
         """
         select the given file and call my handler on the file path of it
         
@@ -74,7 +74,10 @@ class FileSelector():
         if file_path is None:
             raise ValueError(f"No item with id {id_to_find} found in the tree structure.")
         if self.handler:
-            self.handler(file_path) 
+            if inspect.iscoroutinefunction(self.handler):
+                await self.handler(file_path)
+            else:
+                self.handler(file_path) 
 
     def get_dir_tree(self, path: str, extension: str, id_path: List[int]=[1], file_counter: int = 1) -> Optional[Dict[str, dict]]:
         """
@@ -133,7 +136,8 @@ class WebServer:
         """Constructs all the necessary attributes for the WebServer object."""
         self.oscad = OpenScad(scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
 // default number o facets for arc generation
-$fn=30;""")
+$fn=30;
+""")
         self.code="""// nicescad example
 module example() {
   translate([0,0,15]) {
@@ -143,6 +147,7 @@ module example() {
 }
 example();"""        
         self.input="example.scad"
+        self.stl_name="result.stl"
         self.is_local=False
         app.add_static_files('/stl', self.oscad.tmp_dir)
         self.log_view=None
@@ -150,8 +155,8 @@ example();"""
         self.html_view=None
  
         @ui.page('/')
-        def home():
-            self.home()
+        async def home():
+            await self.home()
             
         @ui.page('/settings')
         def settings():
@@ -180,9 +185,7 @@ example();"""
             self.log_view.push(self.error_msg)
         print(self.error_msg,file=sys.stderr)
 
-    
-        
-    async def render(self, _click_args):
+    async def render(self, _click_args=None):
         """Renders the OpenScad string and updates the 3D scene with the result.
 
         Args:
@@ -193,14 +196,17 @@ example();"""
             ui.notify("rendering ...")
             with self.scene:
                 self.scene.clear()
+                self.stl_link.visible=False
             openscad_str = self.code_area.value
-            render_result= await self.oscad.openscad_str_to_file_async(openscad_str)
+            stl_path=stl_path = os.path.join(self.oscad.tmp_dir, self.stl_name) 
+            render_result= await self.oscad.openscad_str_to_file(openscad_str,stl_path)
             # show render result in log
             self.log_view.push(render_result.stderr)
             if render_result.returncode==0:
                 ui.notify("stl created ... loading into scene")
+                self.stl_link.visible=True
                 with self.scene:
-                    self.scene.stl("/stl/tmp.stl").move(x=0.0).scale(0.1)    
+                    self.scene.stl(f"/stl/{self.stl_name}").move(x=0.0).scale(0.1)    
         except BaseException as ex:
             self.handle_exception(ex,self.do_trace)  
         self.progress_view.visible=False  
@@ -224,16 +230,26 @@ example();"""
             else:
                 raise Exception(f'File does not exist: {input_str}')
     
-    def read_input(self, input: str):
+    async def read_and_optionally_render(self,input_str):
+        """Reads the given input and optionally renders the given input
+
+        Args:
+            input_str (str): The input string representing a URL or local file.
+        """
+        self.read_input(input_str)
+        if self.render_on_load:
+            await self.render(None)
+        
+    def read_input(self, input_str: str):
         """Reads the given input and handles any exceptions.
 
         Args:
-            input (str): The input string representing a URL or local file.
+            input_str (str): The input string representing a URL or local file.
         """
         try:
-            ui.notify(f"reading {input}")
-            self.code = self.do_read_input(input)
-            self.input_input.set_value(input)
+            ui.notify(f"reading {input_str}")
+            self.code = self.do_read_input(input_str)
+            self.input_input.set_value(input_str)
             self.code_area.set_value(self.code)
             self.log_view.clear()
             self.error_msg = None
@@ -256,8 +272,7 @@ example();"""
             pick_list = await LocalFilePicker('~', multiple=False)
             if len(pick_list)>0:
                 input_file=pick_list[0]
-                ui.notify(f'Opening {input_file}')
-                self.read_input(input_file)
+                await self.read_and_optionally_render(input_file)
     pass
 
     async def reload_file(self):
@@ -276,8 +291,7 @@ example();"""
         if not allowed:
             ui.notify("only white listed URLs are allowed")
         else:    
-            ui.notify(f"reloading {self.input} ...")
-            self.read_input(self.input)
+            await self.read_and_optionally_render(self.input)
             
     def select_example(self,ts):
         """
@@ -374,7 +388,7 @@ example();"""
         except BaseException as ex:
             self.handle_exception(ex, self.do_trace)
         
-    def home(self):
+    async def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
         self.setup_pygments()
         self.setup_menu()
@@ -386,7 +400,7 @@ example();"""
                         scene.spot_light(distance=100, intensity=0.2).move(-10, 0, 10)
                     with splitter.after:
                         with ui.element("div").classes("w-full"):
-                            self.example_selector=FileSelector(path=self.root_path,extension=".scad",handler=self.read_input)
+                            self.example_selector=FileSelector(path=self.root_path,extension=".scad",handler=self.read_and_optionally_render)
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
@@ -397,6 +411,8 @@ example();"""
                             if self.is_local:
                                 self.tool_button(name="open",icon="file_open",handler=self.open_file)
                             self.tool_button(name="render",icon="play_circle",handler=self.render)
+                            self.stl_link=ui.link("stl result",f"/stl/{self.stl_name}")
+                            self.stl_link.visible=False
                             self.progress_view = ui.spinner('dots', size='lg', color='blue')
                             self.progress_view.visible = False
                             self.code_area = ui.textarea(value=self.code,on_change=self.code_changed).props('clearable').props("rows=25")
@@ -405,12 +421,13 @@ example();"""
                             self.log_view = ui.log(max_lines=20).classes('w-full h-40')        
         self.setup_footer()        
         if self.args.input:
-            self.read_input(self.args.input)
+            await self.read_and_optionally_render(self.args.input)
         
     def settings(self):
         """Generates the settings page with a link to the project's GitHub page."""
         self.setup_menu()
-        v = ui.checkbox('debug with trace', value=True)
+        ui.checkbox('debug with trace', value=True).bind_value(self, "do_trace")
+        ui.checkbox('render on load',value=self.render_on_load).bind_value(self,"render_on_load")
         sp_input=ui.textarea("scad prepend",value=self.oscad.scad_prepend).props("cols=80")
         sp_input.bind_value(self.oscad,"scad_prepend")
         self.setup_footer()
@@ -424,4 +441,5 @@ example();"""
         self.args=args
         self.is_local=args.local
         self.root_path=args.root_path 
+        self.render_on_load=args.render_on_load
         ui.run(title=Version.name, host=args.host, port=args.port, show=args.client,reload=False)

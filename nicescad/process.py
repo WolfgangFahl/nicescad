@@ -1,7 +1,7 @@
 import asyncio
 import subprocess
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Awaitable
 
 @dataclass
 class Subprocess:
@@ -14,7 +14,7 @@ class Subprocess:
     exception: Optional[BaseException] = None
 
     @staticmethod
-    async def run_async(cmd: List[str]):
+    async def run_async(cmd: List[str])->Awaitable["Subprocess"]:
         """
         Asynchronously runs a command as a subprocess and returns the result as an instance of this class.
         
@@ -24,23 +24,27 @@ class Subprocess:
         Returns:
             Subprocess: An instance of this class representing the result of the subprocess execution.
         """
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        
-        stdout, stderr = await proc.communicate()
-
-        return Subprocess(
-            stdout=stdout.decode(), 
-            stderr=stderr.decode(), 
-            cmd=cmd, 
-            returncode=proc.returncode
-        )
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            stdout, stderr = await proc.communicate()
+    
+            subprocess=Subprocess(
+                stdout=stdout.decode(), 
+                stderr=stderr.decode(), 
+                cmd=cmd, 
+                returncode=proc.returncode
+            )
+        except BaseException as ex:
+            subprocess=Subprocess(stdout='', stderr=str(ex), cmd=cmd, returncode=-1, exception=ex)
+        return subprocess    
 
     @staticmethod
-    def run(cmd: List[str]):
+    def run(cmd: List[str])->"Subprocess":
         """
         Runs a command as a subprocess and returns the result as an instance of this class.
         
@@ -50,10 +54,5 @@ class Subprocess:
         Returns:
             Subprocess: An instance of this class representing the result of the subprocess execution.
         """
-        try:
-            proc = subprocess.run(cmd, capture_output=True, text=True)
-            return Subprocess(stdout=proc.stdout, stderr=proc.stderr, cmd=cmd, returncode=proc.returncode)
-        except subprocess.CalledProcessError as cpe:
-            return Subprocess(stdout=cpe.stdout, stderr=cpe.stderr, cmd=cmd, returncode=cpe.returncode, exception=cpe)
-        except Exception as e:
-            return Subprocess(stdout='', stderr=str(e), cmd=cmd, returncode=-1, exception=e)
+        subprocess=asyncio.run(Subprocess.run_async(cmd))
+        return subprocess

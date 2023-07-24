@@ -3,6 +3,8 @@ Created on 2023-07-19
 
 @author: wf
 '''
+import asyncio
+import os
 from tests.basetest import Basetest
 from nicescad.openscad import OpenScad
 
@@ -25,8 +27,15 @@ class TestOpenScad(Basetest):
         # openscad_exec="/Users/wf/bin/openscad"
         oscad=OpenScad()
         openscad_str="cube(5);"
-        stl=oscad.openscad_str_to_file(openscad_str)
-        print(stl)
+        stl_path = os.path.join(oscad.tmp_dir, 'cube5.stl') 
+        subprocess=asyncio.run(oscad.openscad_str_to_file(openscad_str,stl_path))
+        debug=self.debug
+        #debug=True
+        if debug:
+            print(subprocess)
+        self.assertEqual(0,subprocess.returncode)
+        self.assertEqual(stl_path,subprocess.stl_path)
+        self.assertTrue(os.path.isfile(stl_path))
         pass
     
     def test_highlight_code(self):
@@ -49,5 +58,3 @@ class TestOpenScad(Basetest):
         if debug:
             print(highlighted_code)
         self.assertTrue(highlighted_code.startswith('<div'))
-
-        

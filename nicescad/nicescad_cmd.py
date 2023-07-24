@@ -29,6 +29,7 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     parser.add_argument("-l", "--local", dest="local", action="store_true", help="run with local file system access [default: %(default)s]")
     parser.add_argument("-i", "--input", help="input file")
     parser.add_argument("-rp", "--root_path",default=WebServer.examples_path(),help="path to scad files [default: %(default)s]")
+    parser.add_argument("-rol","--render_on_load", action="store_true", help="render on load [default: %(default)s]")
 
     parser.add_argument("--host", default="localhost",
                             help="the host to serve / listen from [default: %(default)s]")
@@ -36,7 +37,6 @@ def getArgParser(description:str,version_msg)->ArgumentParser:
     parser.add_argument("-s","--serve", action="store_true", help="start webserver [default: %(default)s]")
     parser.add_argument("-V", "--version", action='version', version=version_msg)
     return parser
-
 
 def main(argv=None): 
     '''main program.'''
