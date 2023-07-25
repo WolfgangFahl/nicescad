@@ -56,11 +56,11 @@ test = [
 ]
 
 [tool.hatch.build.targets.wheel]
-only-include = ["nicescad","scad_examples"]
+only-include = ["nicescad","nicescad_examples"]
 
 [tool.hatch.build.targets.wheel.sources]
 "nicescad" = "nicescad"
-"scad_examples" = "scad_examples"
+"nicescad_examples" = "nicescad_examples"
 
 [project.scripts]
 nicescad = "nicescad.nicescad_cmd:main"

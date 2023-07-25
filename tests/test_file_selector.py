@@ -24,7 +24,8 @@ class TestFileSelector(Basetest):
         if debug:
             print(json.dumps(file_selector.tree_structure, indent=2))
         self.assertTrue("id" in file_selector.tree_structure)
-        node=file_selector.find_node_by_id(file_selector.tree_structure,"1.2")
+        sample_id="1.1.1.1"
+        node=file_selector.find_node_by_id(file_selector.tree_structure,sample_id)
         if debug:
             print(json.dumps(node,indent=2))
         self.assertIsNotNone(node)

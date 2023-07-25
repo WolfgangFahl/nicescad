@@ -62,7 +62,7 @@ example();"""
     @classmethod
     def examples_path(cls)->str:
         # the root directory (default: examples)
-        path = os.path.join(os.path.dirname(__file__), '../scad_examples')
+        path = os.path.join(os.path.dirname(__file__), '../nicescad_examples')
         path = os.path.abspath(path)
         return path
  
@@ -365,8 +365,9 @@ example();"""
                 with splitter.before:
                     self.grid_button=self.tool_button("toggle grid",handler=self.toggle_grid,icon='grid_off',toggle_icon='grid_on')
                     self.axes_button=self.tool_button("toggle axes",icon="polyline",toggle_icon="square",handler=self.toggle_axes)
-                    self.color_picker_button=ui.button(icon='colorize')      
-                    self.color_picker = ui.color_picker(on_pick=self.pick_color)
+                    self.color_picker_button=ui.button(icon='colorize')     
+                    with self.color_picker_button: 
+                        self.color_picker = ui.color_picker(on_pick=self.pick_color)
                     self.color_picker_button.disable()
                     
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
