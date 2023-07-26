@@ -42,6 +42,7 @@ module example() {
 example();"""        
         self.input="example.scad"
         self.stl_name="result.stl"
+        self.stl_color="#57B6A9"
         self.stl_object=None
         self.is_local=False
         app.add_static_files('/stl', self.oscad.tmp_dir)
@@ -104,7 +105,9 @@ example();"""
                 self.stl_link.visible=True
                 self.color_picker_button.enable()
                 with self.scene:
-                    self.stl_object=self.scene.stl(f"/stl/{self.stl_name}").move(x=0.0).scale(0.1)    
+                    self.stl_object=self.scene.stl(f"/stl/{self.stl_name}").move(x=0.0).scale(0.1) 
+                    self.stl_object.name=self.stl_name   
+                    self.stl_object.material(self.stl_color)
         except BaseException as ex:
             self.handle_exception(ex,self.do_trace)  
         self.progress_view.visible=False  
@@ -324,6 +327,7 @@ example();"""
         """
         self.color_picker_button.style(f'background-color:{e.color}!important')
         if self.stl_object:
+            self.stl_color=e.color
             self.stl_object.material(f'{e.color}')
         pass
     
@@ -365,7 +369,7 @@ example();"""
                 with splitter.before:
                     self.grid_button=self.tool_button("toggle grid",handler=self.toggle_grid,icon='grid_off',toggle_icon='grid_on')
                     self.axes_button=self.tool_button("toggle axes",icon="polyline",toggle_icon="square",handler=self.toggle_axes)
-                    self.color_picker_button=ui.button(icon='colorize')     
+                    self.color_picker_button=ui.button(icon='colorize',color=self.stl_color)     
                     with self.color_picker_button: 
                         self.color_picker = ui.color_picker(on_pick=self.pick_color)
                     self.color_picker_button.disable()
