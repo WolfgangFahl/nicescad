@@ -92,7 +92,6 @@ example();"""
             self.progress_view.visible = True
             ui.notify("rendering ...")
             with self.scene:
-                self.scene.clear()
                 self.stl_link.visible=False
                 self.color_picker_button.disable()
             openscad_str = self.code_area.value
@@ -349,9 +348,13 @@ example();"""
         try:
             grid=self.scene._props["grid"]
             grid_str="off" if grid else "on"
+            grid_js="false" if grid else "true"
             # try toggling grid
             ui.notify(f"setting grid to {grid_str}")
             grid=not grid
+            # workaround according to https://github.com/zauberzeug/nicegui/discussions/1246
+            js_cmd=f'scene_c{self.scene.id}.children.find(c => c.type === "GridHelper").visible = {grid_js}'
+            await ui.run_javascript(js_cmd, respond=False)
             self.scene._props["grid"]=grid
             self.scene.update()
             # try toggling icon
