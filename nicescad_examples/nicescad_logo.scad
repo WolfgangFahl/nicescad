@@ -29,7 +29,7 @@ tube_extra_length = 5;          // Extra length of the tubes
 tube_slant = 5;                 // Slant of the tubes
 num_tubes = 8;                  // Number of tubes
 render_margin = 0.01;           // Render margin to avoid rounding errors
-initial_rotation = [65,35,0];   // Initial rotation to orient first tube towards user
+initial_rotation = [0, 0, 45];  // Initial rotation to orient first tube towards user
 
 // Main cube module
 module main_cube(size) {
