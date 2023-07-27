@@ -30,6 +30,7 @@ tube_slant = 5;                 // Slant of the tubes
 num_tubes = 8;                  // Number of tubes
 render_margin = 0.01;           // Render margin to avoid rounding errors
 initial_rotation = [0, 0, 45];  // Initial rotation to orient first tube towards user
+local_fn = 20;                 // Local resolution of the cylinders
 
 // Main cube module
 module main_cube(size) {
@@ -38,41 +39,41 @@ module main_cube(size) {
 }
 
 // Hollow tube module
-module hollow_tube(d, h, t, render_margin) {
+module hollow_tube(d, h, t, render_margin, local_fn) {
     // Creates a hollow tube by subtracting a smaller cylinder from a larger one
-    render(convexity = 2, $fn = d * 10, $fa = render_margin) {
+    render(convexity = 2, $fa = render_margin) {
         difference() {
-            cylinder(d = d, h = h, center = true);
-            cylinder(d = d - 2 * t, h = h, center = true);
+            cylinder(d = d, h = h, center = true, $fn = local_fn);
+            cylinder(d = d - 2 * t, h = h, center = true, $fn = local_fn);
         }
     }
 }
 
 // Tube placements
-module place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation) {
+module place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation, local_fn) {
     // Iterate over the number of tubes and rotate each tube by a multiple of 360/num_tubes around the X, Y, and Z axes
     // The tube length is calculated to be slightly longer than the diagonal of the cube
     for(i = [0:num_tubes-1]) {
         angle = i * 360/num_tubes;
         rotate(initial_rotation + [angle, angle + tube_slant, 0]) {
-            hollow_tube(tube_d, sqrt(3) * size + tube_extra_length, tube_t, render_margin);
+            hollow_tube(tube_d, sqrt(3) * size + tube_extra_length, tube_t, render_margin, local_fn);
         }
     }
 }
 
 // Logo module
-module nice_scad_logo(size, tube_d, tube_t, tube_extra_length, tube_slant, num_tubes, render_margin, initial_rotation) {
+module nice_scad_logo(size, tube_d, tube_t, tube_extra_length, tube_slant, num_tubes, render_margin, initial_rotation, local_fn) {
     // The logo is constructed by union of the cube and the placed tubes
-    // Then the inner cylinders are subtracted to create the "see-thru" effect
+    // Then the inner cylinders are subtracted to create the "see thru" effect
     difference() {
         union() {
             main_cube(size);
-            place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation);
+            place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation, local_fn);
         }
         for(i = [0:num_tubes-1]) {
             angle = i * 360/num_tubes;
             rotate(initial_rotation + [angle, angle + tube_slant, 0]) {
-                cylinder(d = tube_d - 2 * tube_t, h = sqrt(3) * size + tube_extra_length, center = true);
+                cylinder(d = tube_d - 2 * tube_t, h = sqrt(3) * size + tube_extra_length, center = true, $fn = local_fn);
             }
         }
     }
@@ -87,13 +88,13 @@ module test_main_cube() {
 
 module test_hollow_tube() {
     translate([0, -1.5 * size, 0]) {
-        hollow_tube(tube_d, sqrt(3) * size + tube_extra_length, tube_t, render_margin);
+        hollow_tube(tube_d, sqrt(3) * size + tube_extra_length, tube_t, render_margin, local_fn);
     }
 }
 
 module test_place_tubes() {
     translate([1.5 * size, 0, 0]) {
-        place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation);
+        place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation, local_fn);
     }
 }
 
@@ -103,4 +104,4 @@ module test_place_tubes() {
 // test_place_tubes();
 
 // Generate the logo
-nice_scad_logo(size, tube_d, tube_t, tube_extra_length, tube_slant, num_tubes, render_margin, initial_rotation);
+nice_scad_logo(size, tube_d, tube_t, tube_extra_length, tube_slant, num_tubes, render_margin, initial_rotation, local_fn);
