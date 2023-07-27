@@ -1,99 +1,101 @@
 /*
-If you're new to OpenSCAD, please visit the following link to learn the basics:
-https://openscad.org/documentation.html
+If you're new to OpenSCAD, please visit the following link to learn the basics: https://openscad.org/documentation.html
+This is the logo model for NiceSCAD.
+For more information, please visit: http://nicescad.bitplan.com/
 
-This is the logo model for NiceSCAD. For more information, please visit: http://nicescad.bitplan.com/
+Prompt commands:
+- Create a parameterized OpenScad module
+- Create a logo for the nicescad library
+- Code is modular, well-commented
+- Each module has a separate test module
+- Logo consists of a cube with size=40
+- Add hollow tubes=4, diameter=10, thickness=2
+- Tubes are evenly and orthogonally placed in 3D
+- Add a slight slant of 5 to the tubes
+- One tube oriented properly towards the user's perspective
+- Tubes are slightly longer than the diagonal by an extra length of 5
+- Drill holes at the end to achieve a "see-thru" effect
+- Add render_margin=0.01 to avoid rounding errors
 
-The logo is a 3D model of a cube with multiple diagonally oriented tubes running through it. 
-The tubes are longer than the cube's diagonal, and the extra length is a customizable parameter. 
-The thickness of the tubes is also customizable. 
-The tubes are evenly spaced and oriented orthogonally, creating a 'see through' effect. 
-The number of tubes can be adjusted as required.
-
-This model was developed following these prompts:
-- Create an OpenSCAD model with a 40x40x40 cube.
-- The cube has an inner tube with a diameter of 10 oriented towards the viewer, creating a "see-through" effect.
-- The tube is longer than the cube's diagonal.
-- The tube is slightly rotated for an added visual appeal.
-- The final model is encapsulated into a module named 'nice_scad_logo'.
-- The 'tube' is created as a separate module.
-- The whole model is translated upwards for better visibility.
-- The thickness of the tube is 3.
-- All initial parameters are defined as variables.
-- Multiple tubes are included, all orthogonal and evenly spaced.
-- The number of tubes is a parameter that can be adjusted.
-- The tubes are rotated on two axes for a 3D effect. The initial rotation and subsequent angle increments are calculated for visual appeal.
-
-Model designed and created by OpenAI's language model (ChatGPT).
+Author: ChatGPT-4 from OpenAI
+Date: 2023-07-27
 */
 
-// Initial parameters
-cube_size = 30; // Size of the cube
-outer_diameter = 20; // Outer diameter of the tube
-tube_thickness = 3; // Thickness of the tube
-inner_diameter = outer_diameter - 2 * tube_thickness; // Inner diameter of the tube
-tube_extra_length = 5; // Extra length of the tube beyond the cube's space diagonal
-tube_height = sqrt(3)*cube_size + tube_extra_length; // Tube length is cube's space diagonal plus extra length
-num_tubes = 4; // Number of tubes
-render_margin = 0.01; // Small value to ensure holes are visible after rendering
+// Parameters
+size = 40;                      // Cube size
+tube_d = 10;                    // Tube diameter
+tube_t = 2;                     // Tube thickness
+tube_extra_length = 5;          // Extra length of the tubes
+tube_slant = 5;                 // Slant of the tubes
+num_tubes = 4;                  // Number of tubes
+render_margin = 0.01;           // Render margin to avoid rounding errors
+initial_rotation = [45,0,0];    // Initial rotation to orient first tube towards user
 
-// Define rotation sequences for four orthogonal tubes
-rotations = [[0, 45, 0], [90, 45, 0], [0, 45, 90], [90, 45, 90]];
+// Main cube module
+module main_cube(size) {
+    cube(size, center=true);
+}
 
-// The 'tube' module creates a cylindrical tube with a specified outer diameter, rotation and position.
-module tube(h, outer_d, inner_d, rot) {
-    rotate(rot) {
+// Hollow tube module
+module hollow_tube(d, h, t, render_margin) {
+    render(convexity = 2, $fn = d * 10, $fa = render_margin) {
         difference() {
-            cylinder(h=h, d=outer_d, center=true);
-            cylinder(h=h + render_margin, d=inner_d, center=true);
+            cylinder(d = d, h = h, center = true);
+            cylinder(d = d - 2 * t, h = h, center = true);
         }
     }
 }
 
-// The 'cubes_with_tubes' module creates a cube with a number of tubes going through it.
-module cubes_with_tubes(s, h, outer_d, inner_d, num_tubes) {
-    union() {
-        cube(s, center=true);
-        for (i = [0 : num_tubes - 1]) {
-            tube(h, outer_d, inner_d, rotations[i]);
+// Tube placements
+module place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation) {
+    // Iterate over the number of tubes and rotate each tube by a multiple of 360/num_tubes around the X, Y, and Z axes
+    for(i = [0:num_tubes-1]) {
+        angle = i * 360/num_tubes;
+        rotate(initial_rotation + [angle, angle + tube_slant, 0]) {
+            hollow_tube(tube_d, sqrt(3) * size + tube_extra_length, tube_t, render_margin);
         }
     }
 }
 
-// The 'drilled_cubes_with_tubes' module takes the 'cubes_with_tubes' and subtracts inner cylinders for the 'see through' effect.
-module drilled_cubes_with_tubes(s, h, inner_d, num_tubes) {
+// Logo module
+module nice_scad_logo(size, tube_d, tube_t, tube_extra_length, tube_slant, num_tubes, render_margin, initial_rotation) {
     difference() {
-        cubes_with_tubes(s, h, outer_diameter, inner_d, num_tubes);
-        for (i = [0 : num_tubes - 1]) {
-            rotate(rotations[i]) cylinder(h=h + render_margin, d=inner_d, center=true);
+        union() {
+            main_cube(size);
+            place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation);
+        }
+        for(i = [0:num_tubes-1]) {
+            angle = i * 360/num_tubes;
+            rotate(initial_rotation + [angle, angle + tube_slant, 0]) {
+                cylinder(d = tube_d - 2 * tube_t, h = sqrt(3) * size + tube_extra_length, center = true);
+            }
         }
     }
 }
 
-// The 'nice_scad_logo' module calls 'drilled_cubes_with_tubes' as the main active module
-module nice_scad_logo() {
-    drilled_cubes_with_tubes(cube_size, tube_height, inner_diameter, num_tubes);
+// Test modules
+module test_main_cube() {
+    translate([-1.5 * size, 0, 0]) {
+        main_cube(size);
+    }
 }
 
-// Module for testing the 'tube' module
-module test_tube() {
-    translate([50,0,0]) tube(tube_height, outer_diameter, inner_diameter, rotations[0]);
+module test_hollow_tube() {
+    translate([0, -1.5 * size, 0]) {
+        hollow_tube(tube_d, sqrt(3) * size + tube_extra_length, tube_t, render_margin);
+    }
 }
 
-// Module for testing the 'cubes_with_tubes' module
-module test_cubes_with_tubes() {
-    translate([-50,0,0]) cubes_with_tubes(cube_size, tube_height, outer_diameter, inner_diameter, num_tubes);
+module test_place_tubes() {
+    translate([1.5 * size, 0, 0]) {
+        place_tubes(num_tubes, size, tube_d, tube_t, tube_extra_length, tube_slant, render_margin, initial_rotation);
+    }
 }
 
-// Module for testing the 'drilled_cubes_with_tubes' module
-module test_drilled_cubes_with_tubes() {
-    translate([0,-50,0]) drilled_cubes_with_tubes(cube_size, tube_height, inner_diameter, num_tubes);
-}
+// Uncomment below to run test modules
+// test_main_cube();
+// test_hollow_tube();
+// test_place_tubes();
 
-// Calling the main module
-nice_scad_logo();
-
-// Uncomment the following lines to test the individual modules
-//test_tube();
-//test_cubes_with_tubes();
-//test_drilled_cubes_with_tubes();
+// Generate the logo
+nice_scad_logo(size, tube_d, tube_t, tube_extra_length, tube_slant, num_tubes, render_margin, initial_rotation);
