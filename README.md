@@ -22,4 +22,10 @@ nicescad brings OpenScad to the browser (again)
 ## Links
 * https://openscad.org/
 * https://nicegui.io
+### Alternative online editors
 * https://ochafik.com/openscad2/
+* http://www.implicitcad.org/editor
+* https://www.blockscad3d.com/editor/
+* https://openjscad.azurewebsites.net/
+* https://openjscad.xyz/
+
