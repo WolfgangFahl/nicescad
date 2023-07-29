@@ -28,4 +28,8 @@ nicescad brings OpenScad to the browser (again)
 * https://www.blockscad3d.com/editor/
 * https://openjscad.azurewebsites.net/
 * https://openjscad.xyz/
+### Jupyter notebook integration
+* https://github.com/nickc92/ViewSCAD
+### Python integration
+* https://github.com/jeff-dh/SolidPython
 
