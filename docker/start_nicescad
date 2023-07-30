@@ -19,20 +19,22 @@
 # Variables
 nicescad_port=9858
 p2scad_port=8093
-blockscad_port=9000
+blockscad_port=8094
 log_file="/var/log/nicescad/nicescad.log"
 nocache=""
 timeout=5
+services=("nicescad" "p2scad" "blockscad")
+service_ports=("$nicescad_port" "$p2scad_port" "$blockscad_port")
 
 function usage {
-    echo "Usage: $0 {start|stop|restart|bash|rebuild} [--nicescad-port <port number>] [--p2scad-port <port number>] [--blockscad-port <port number>] [--log-file <log file path>] [--timeout <seconds>]"
+    echo "Usage: $0 {start|stop|restart|bash|rebuild|client} [--nicescad-port <port number>] [--p2scad-port <port number>] [--blockscad-port <port number>] [--log-file <log file path>] [--timeout <seconds>]"
     echo "   start|stop|restart|bash|rebuild: Start, stop, restart, rebuild the services, or start a bash shell in a service container"
     echo "   OPTIONS:"
-    echo "     --nicescad-port : Port for the nicescad service (default 9858)"
-    echo "     --p2scad-port   : Port for the p2scad service (default 8093)"
-    echo "     --blockscad-port : Port for the blockscad service (default 9000)"
-    echo "     --log-file      : Path to the log file (default /var/log/nicescad/nicescad.log)"
-    echo "     --timeout       : Timeout for service startup (default 5 seconds)"
+    echo "     --nicescad-port : Port for the nicescad service (default ${nicescad_port})"
+    echo "     --p2scad-port   : Port for the p2scad service (default ${p2scad_port})"
+    echo "     --blockscad-port : Port for the blockscad service (default ${blockscad_port})"
+    echo "     --log-file      : Path to the log file (default ${log_file})"
+    echo "     --timeout       : Timeout for service startup (default ${timeout} seconds)"
 }
 
 function start_services {
@@ -51,7 +53,11 @@ function start_services {
     while [ $SECONDS -lt $end ]; do
         sleep 0.5
         echo -n "."
-        if check_services; then
+        if check_services true; then
+            echo "Services started successfully."
+            for i in "${!services[@]}"; do
+                echo "Service ${services[$i]} is running at http://localhost:${service_ports[$i]}"
+            done
             break
         fi
     done
@@ -75,18 +81,29 @@ function bash_into {
     docker exec -it ${service}_service bash
 }
 
+function client_into {
+    service=$1
+    key=$(printf "%s\n" "${services[@]}" | grep -nx "${service}" | cut -d: -f1)
+    if [ -z "${key}" ]; then
+        echo "Invalid service name. Choose between nicescad, p2scad and blockscad."
+    else
+        let key-=1
+        open http://localhost:${service_ports[$key]}
+    fi
+}
+
 function check_services {
+    local silent=$1
     local fail=0
     # Check if the services have started
-    for service in nicescad p2scad blockscad; do
-        if ! docker ps | grep -q ${service}_service; then
-            echo "${service} service failed to start."
+    for service in "${services[@]}"; do
+        if ! docker ps | grep -q "${service}_service"; then
+            if [[ "${silent}" != "true" ]]; then
+                echo "${service} service failed to start."
+            fi
             fail=1
         fi
     done
-    if [ ${fail} -eq 0 ]; then
-        echo "All services started successfully."
-    fi
     return ${fail}
 }
 
@@ -109,16 +126,20 @@ while [ "$1" != "" ]; do
             fi
             bash_into $2
             ;;
+        client)
+            if [ $# -lt 2 ]; then
+                echo "You need to specify a service name (nicescad, p2scad or blockscad)"
+                exit 1
+            fi
+            client_into $2
+            ;;
         rebuild) rebuild_services ;;
-        --nicescad-port) shift; nicescad_port=$1 ;;
-        --p2scad-port) shift; p2scad_port=$1 ;;
-        --blockscad-port) shift; blockscad_port=$1 ;;
+        --nicescad-port) shift; nicescad_port=$1; service_ports[0]=$1 ;;
+        --p2scad-port) shift; p2scad_port=$1; service_ports[1]=$1 ;;
+        --blockscad-port) shift; blockscad_port=$1; service_ports[2]=$1 ;;
         --log-file) shift; log_file=$1 ;;
         --timeout) shift; timeout=$1 ;;
         *) usage ;;
     esac
     shift
 done
-
-
-
