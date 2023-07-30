@@ -24,3 +24,13 @@ services:
       dockerfile: Dockerfile.p2scad
     ports:
       - 8093:80
+  openjscad:
+    image: openjscad-service
+    container_name: openjscad_service
+    build:
+      context: .
+      dockerfile: Dockerfile.openjscad
+    ports:
+      - 8095:8080
+    volumes:
+      - $HOME/nicescad/workspace:/openjscad/packages/web/examples/workspace

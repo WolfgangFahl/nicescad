@@ -1,18 +1,16 @@
 #!/bin/bash
 
-# Prompts used to guide the creation of this script:
-# - Convert python code to OpenSCAD code
-# - Provide a RESTful service for the conversion
-# - Dockerize the service
-# - Handle user-provided python code securely
-# - Provide an interface for providing python code
-# - Provide testing for the conversion function
-# - Allow conversion of python code from a file
-# - Handle expected OpenSCAD code formatting
-# - Handle interaction of multiple services using Docker Compose
-# - Bash option to interact with services
+# This bash script manages the operation of four services:
+# - nicescad: A service that makes OpenSCAD designs more readable and maintainable.
+# - p2scad: A service that converts Python code into OpenSCAD code.
+# - blockscad: A service that provides a block-based interface for creating OpenSCAD code.
+# - openjscad: A service that converts JavaScript code into OpenSCAD code.
+# These services are each hosted in a Docker container, and are managed collectively with Docker Compose. 
+# The script provides functions to start, stop, restart, and rebuild the services, 
+# as well as functions to open a bash shell in a service container or open a web client to interact with a service.
+# Additionally, it provides options to customize service ports, specify a log file, and set a timeout for service startup.
 
-# This script was created to resolve https://github.com/WolfgangFahl/nicescad/issues/28
+# The script is part of the resolution for https://github.com/WolfgangFahl/nicescad/issues/28
 # Author: ChatGPT-4 by OpenAI
 # Date: 2023-07-30
 
@@ -20,19 +18,20 @@
 nicescad_port=9858
 p2scad_port=8093
 blockscad_port=8094
+openjscad_port=8095
 log_file="/var/log/nicescad/nicescad.log"
 nocache=""
 timeout=5
-services=("nicescad" "p2scad" "blockscad")
-service_ports=("$nicescad_port" "$p2scad_port" "$blockscad_port")
+services=("nicescad" "p2scad" "blockscad" "openjscad")
+service_ports=("$nicescad_port" "$p2scad_port" "$blockscad_port" "$openjscad_port")
 
 function usage {
-    echo "Usage: $0 {start|stop|restart|bash|rebuild|client} [--nicescad-port <port number>] [--p2scad-port <port number>] [--blockscad-port <port number>] [--log-file <log file path>] [--timeout <seconds>]"
+    echo "Usage: $0 {start|stop|restart|bash|rebuild|client} [OPTIONS]"
     echo "   start|stop|restart|bash|rebuild: Start, stop, restart, rebuild the services, or start a bash shell in a service container"
     echo "   OPTIONS:"
-    echo "     --nicescad-port : Port for the nicescad service (default ${nicescad_port})"
-    echo "     --p2scad-port   : Port for the p2scad service (default ${p2scad_port})"
-    echo "     --blockscad-port : Port for the blockscad service (default ${blockscad_port})"
+    for i in "${!services[@]}"; do
+        echo "     --${services[$i]}-port : Port for the ${services[$i]} service (default ${service_ports[$i]})"
+    done
     echo "     --log-file      : Path to the log file (default ${log_file})"
     echo "     --timeout       : Timeout for service startup (default ${timeout} seconds)"
 }
@@ -61,7 +60,8 @@ function start_services {
             break
         fi
     done
-    echo
+    check_services false
+    echo "see $log_file for details"
 }
 
 function stop_services {
@@ -85,7 +85,7 @@ function client_into {
     service=$1
     key=$(printf "%s\n" "${services[@]}" | grep -nx "${service}" | cut -d: -f1)
     if [ -z "${key}" ]; then
-        echo "Invalid service name. Choose between nicescad, p2scad and blockscad."
+        echo "Invalid service name. Choose between: ${services[*]}"
     else
         let key-=1
         open http://localhost:${service_ports[$key]}
