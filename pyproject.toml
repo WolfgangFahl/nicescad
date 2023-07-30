@@ -66,3 +66,4 @@ only-include = ["nicescad","nicescad_examples"]
 
 [project.scripts]
 nicescad = "nicescad.nicescad_cmd:main"
+p2scad = "nicescad.solidservice:main"
