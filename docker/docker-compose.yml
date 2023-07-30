@@ -2,6 +2,7 @@ version: '3.8'
 services:
   nicescad:
     image: nicescad-service
+    container_name: nicescad_service
     build:
       context: .
       dockerfile: Dockerfile.nicescad
@@ -9,6 +10,7 @@ services:
       - 9858:9858
   p2scad:
     image: p2scad-service
+    container_name: p2scad_service
     build:
       context: .
       dockerfile: Dockerfile.p2scad
