@@ -8,6 +8,7 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 from solid2 import *
+import nicescad as nicescad
 
 class SolidConverter:
     """
@@ -37,6 +38,16 @@ class FastAPIServer:
     def __init__(self):
         self.app = FastAPI()
         self.app.post("/convert/")(self.convert)
+        self.app.get("/version/")(self.version)
+        
+    async def version(self):
+        """
+        Endpoint to return the version of the nicescad package.
+
+        Returns:
+        dict -- the version
+        """
+        return {"version": nicescad.__version__}
 
     async def convert(self, item: Item):
         """
