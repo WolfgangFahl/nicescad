@@ -7,7 +7,7 @@ import argparse
 import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
-from solid import *
+from solid2 import *
 
 class SolidConverter:
     """
