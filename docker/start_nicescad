@@ -34,6 +34,7 @@ function usage {
     done
     echo "     --log-file      : Path to the log file (default ${log_file})"
     echo "     --timeout       : Timeout for service startup (default ${timeout} seconds)"
+    echo "     --nocache       : Rebuild the docker images without using cache"
 }
 
 function start_services {
@@ -70,7 +71,7 @@ function stop_services {
 }
 
 function rebuild_services {
-    echo "Rebuilding services..."
+    echo "Rebuilding services ... ${nocache}"
     docker-compose down
     docker-compose build ${nocache}
     start_services
@@ -139,6 +140,7 @@ while [ "$1" != "" ]; do
         --blockscad-port) shift; blockscad_port=$1; service_ports[2]=$1 ;;
         --log-file) shift; log_file=$1 ;;
         --timeout) shift; timeout=$1 ;;
+        --nocache) nocache="--no-cache" ;;
         *) usage ;;
     esac
     shift

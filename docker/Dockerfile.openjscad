@@ -1,14 +1,14 @@
 # Dockerfile.openjscad
-FROM node:14
+FROM nikolaik/python-nodejs:latest
 
 # Set the working directory
-WORKDIR /usr/local/lib/node_modules
+WORKDIR /root
 
-# Install openjscad globally
-RUN npm install -g @jscad/openjscad
+# Install openjscad locally
+RUN npm install @jscad/openjscad
 
 # Go into the openjscad directory
-WORKDIR /usr/local/lib/node_modules/@jscad/openjscad
+WORKDIR /root/node_modules/@jscad/openjscad
 
 # Create a workspace directory
 RUN mkdir -p /openjscad/packages/web/examples/workspace
@@ -16,5 +16,5 @@ RUN mkdir -p /openjscad/packages/web/examples/workspace
 # Expose the port openjscad will run on
 EXPOSE 8080
 
-# Serve the index.html file
-CMD ["node", "./packages/web/dist/index.js"]
+# Start the application with http.server
+CMD python -m http.server 8080
