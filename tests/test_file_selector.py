@@ -20,7 +20,7 @@ class TestFileSelector(Basetest):
         """
         file_selector=FileSelector(WebServer.examples_path(),".scad")
         debug=self.debug
-        debug=True
+        #debug=True
         if debug:
             print(json.dumps(file_selector.tree_structure, indent=2))
         self.assertTrue("id" in file_selector.tree_structure)

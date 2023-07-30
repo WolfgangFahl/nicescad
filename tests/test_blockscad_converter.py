@@ -29,7 +29,6 @@ Author: OpenAI ChatGPT
 Date: July 25, 2023
 """
 
-import os
 import unittest
 import tempfile
 from tests.basetest import Basetest
@@ -71,6 +70,9 @@ class TestBlockscadConverter(Basetest):
         """
         if self.inPublicCI():
             return
+        # only comment out when really testing since openai API usage
+        # has a cost
+        return
         blockscad_files = list(self.blockscad_dir.glob('*.xml'))
         self.assertGreater(len(blockscad_files), 0, "No BlockSCAD XML files found for testing.")
         failures=[]
