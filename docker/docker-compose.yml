@@ -23,7 +23,7 @@ services:
       context: .
       dockerfile: Dockerfile.p2scad
     ports:
-      - 8093:80
+      - 8093:8000
   openjscad:
     image: openjscad-service
     container_name: openjscad_service
