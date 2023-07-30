@@ -28,7 +28,7 @@ dependencies = [
     # openai
     "openai",
 	# pydantic
-	"pydantic>=1.8.2
+	"pydantic>=1.8.2"
 ]
 
 requires-python = ">=3.8"
