@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from solid2 import *
 import nicescad as nicescad
+from starlette.responses import HTMLResponse
 
 class SolidConverter:
     """
@@ -39,6 +40,29 @@ class FastAPIServer:
         self.app = FastAPI()
         self.app.post("/convert/")(self.convert)
         self.app.get("/version/")(self.version)
+        self.app.get("/", response_class=HTMLResponse)(self.home)
+
+    async def home(self):
+        """
+        Endpoint to return the homepage with links.
+
+        Returns:
+        str -- HTML content
+        """
+        return """
+        <html>
+            <head>
+                <title>Nicescad solidpython converter service</title>
+            </head>
+            <body>
+                <h1>Welcome to the nicescad solidpython to scad converter</h1>
+                <ul>
+                    <li><a href="/version/">Check the version of nicescad</a></li>
+                    <li><a href="https://github.com/WolfgangFahl/nicescad/issues/28">nicescad GitHub issue</a></li>
+                </ul>
+            </body>
+        </html>
+        """
         
     async def version(self):
         """
