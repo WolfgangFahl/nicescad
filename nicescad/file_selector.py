@@ -13,24 +13,79 @@ class FileSelector():
     """
     nicegui FileSelector
     """
-    def __init__(self,path:str,extension: str,handler:Callable=None):
+    def __init__(self,path:str,extensions: dict=None,handler:Callable=None):
         """
         constructor
         
         Args:
             path (str): The path to the directory to start building the tree from.
-            extension(str): the extension to filter for
+            extensions(dict): the extensions to filter for as a dictionary with name as key and extension as value
             handler(Callable): handler function to call on selection
         """   
         self.path=path
-        self.extension=extension 
+        if extensions is None:
+            extensions = {"blockscad": ".xml", "openscad": ".scad", "solidpython": ".py"}
+        self.extensions=extensions 
         self.handler=handler
         # generate the tree structure
-        self.tree_structure = self.get_dir_tree(self.path,self.extension)
+        self.tree_structure = self.get_dir_tree(self.path, self.extensions)
 
         # create the ui.tree object
         self.tree=ui.tree([self.tree_structure], label_key='label', on_select=self.select_file)
-         
+   
+    def get_dir_tree(self, path: str, extensions: dict, id_path: List[int] = [1]) -> Optional[Dict[str, Union[str, List[Dict]]]]:
+        """
+        Recursive function to construct a directory tree.
+    
+        Args:
+            path (str): The path to the directory to start building the tree from.
+            extensions(dict): the extensions to filter for as a dictionary with name as key and extension as value
+            id_path (List[int]): List of integers representing the current path in the tree.
+    
+        Returns:
+            dict: A dictionary representing the directory tree. For each directory or .scad file found,
+            it will add a dictionary to the 'children' list of its parent directory's dictionary.
+        """
+        path = os.path.abspath(path)
+        id_string = '.'.join(map(str, id_path))
+        items = os.listdir(path)
+        children = []
+        item_counter = 1  # counter for generating child id
+    
+        # Iterating over directories first
+        for name in items:
+            item_path = os.path.join(path, name)
+            child_id_path = id_path + [item_counter]
+    
+            if os.path.isdir(item_path):
+                dir_tree = self.get_dir_tree(item_path, extensions, child_id_path)
+                if dir_tree:
+                    children.append(dir_tree)
+                    item_counter += 1
+    
+        # Then iterating over files
+        for name in items:
+            item_path = os.path.join(path, name)
+            child_id_path = id_path + [item_counter]
+    
+            if name.endswith(tuple(extensions.values())) and not os.path.isdir(item_path):
+                children.append({
+                    'id': '.'.join(map(str, child_id_path)),
+                    'label': name,
+                    'value': item_path,
+                })
+                item_counter += 1
+    
+        if children:
+            return {
+                'id': id_string,
+                'label': os.path.basename(path),
+                'value': path,
+                'children': children,
+            }
+
+
+
     def find_node_by_id(self, tree: Dict[str, Union[str, List[Dict]]], id_to_find: str) -> Optional[Dict[str, Union[str, List[Dict]]]]:
         """
         Recursive function to find a node (file or directory) by its ID in a directory tree.
@@ -95,55 +150,6 @@ class FileSelector():
                 # Close all nodes if it is a file
             self.expand([])
    
-    def get_dir_tree(self, path: str, extension: str, id_path: List[int] = [1]) -> Optional[Dict[str, Union[str, List[Dict]]]]:
-        """
-        Recursive function to construct a directory tree.
-    
-        Args:
-            path (str): The path to the directory to start building the tree from.
-            extension(str): the extension to filter for
-            id_path (List[int]): List of integers representing the current path in the tree.
-    
-        Returns:
-            dict: A dictionary representing the directory tree. For each directory or .scad file found,
-            it will add a dictionary to the 'children' list of its parent directory's dictionary.
-        """
-        path = os.path.abspath(path)
-        id_string = '.'.join(map(str, id_path))
-        items = os.listdir(path)
-        children = []
-        item_counter = 1  # counter for generating child id
-    
-        # Iterating over directories first
-        for name in items:
-            item_path = os.path.join(path, name)
-            child_id_path = id_path + [item_counter]
-    
-            if os.path.isdir(item_path):
-                dir_tree = self.get_dir_tree(item_path, extension, child_id_path)
-                if dir_tree:
-                    children.append(dir_tree)
-                    item_counter += 1
-    
-        # Then iterating over files
-        for name in items:
-            item_path = os.path.join(path, name)
-            child_id_path = id_path + [item_counter]
-    
-            if name.endswith(extension) and not os.path.isdir(item_path):
-                children.append({
-                    'id': '.'.join(map(str, child_id_path)),
-                    'label': name,
-                    'value': item_path,
-                })
-                item_counter += 1
-    
-        if children:
-            return {
-                'id': id_string,
-                'label': os.path.basename(path),
-                'value': path,
-                'children': children,
-            }
+
 
 

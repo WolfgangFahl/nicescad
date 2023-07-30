@@ -382,7 +382,7 @@ example();"""
                         scene.spot_light(distance=100, intensity=0.2).move(-10, 0, 10)
                     with splitter.after:
                         with ui.element("div").classes("w-full"):
-                            self.example_selector=FileSelector(path=self.root_path,extension=".scad",handler=self.read_and_optionally_render)
+                            self.example_selector=FileSelector(path=self.root_path,handler=self.read_and_optionally_render)
                             self.input_input=ui.input(
                                 value=self.input,
                                 on_change=self.input_changed).props("size=100")
