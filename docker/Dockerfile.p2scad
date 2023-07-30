@@ -11,4 +11,4 @@ RUN pip install nicescad
 EXPOSE 80
 
 # Run p2scad when the container launches
-CMD ["p2scad", "--serve", "--bind", "0.0.0.0:80"]
+CMD ["p2scad", "--serve", "--host", "0.0.0.0", "--port","80"]

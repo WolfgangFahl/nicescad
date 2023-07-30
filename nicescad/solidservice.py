@@ -57,6 +57,9 @@ def main():
     parser.add_argument("--python_code", help="Python code to convert to OpenSCAD code.")
     parser.add_argument("--file", help="File containing Python code to convert to OpenSCAD code.")
     parser.add_argument("--serve", action="store_true", help="Start the FastAPI server.")
+    parser.add_argument("--host", default="0.0.0.0", help="Host address to bind the server to.")
+    parser.add_argument("--port", default=8000, type=int, help="Port number to bind the server to.")
+ 
     args = parser.parse_args()
 
     if args.serve:

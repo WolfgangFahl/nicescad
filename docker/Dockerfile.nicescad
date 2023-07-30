@@ -11,4 +11,4 @@ RUN apt-get update && apt-get install -y openscad && pip install nicescad
 EXPOSE 9858
 
 # Run nicescad when the container launches
-CMD ["nicescad", "--serve", "--bind", "0.0.0.0:9858"]
+CMD ["nicescad", "--serve", "--host", "0.0.0.0", "--port", "9858"]
