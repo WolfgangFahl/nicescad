@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  nicescad:
+    image: nicescad-service
+    build:
+      context: .
+      dockerfile: Dockerfile.nicescad
+    ports:
+      - 9858:9858
+  p2scad:
+    image: p2scad-service
+    build:
+      context: .
+      dockerfile: Dockerfile.p2scad
+    ports:
+      - 8093:80

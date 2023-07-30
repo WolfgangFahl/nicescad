@@ -1,0 +1,14 @@
+# Use an official Python runtime as a parent image
+FROM python:3.9-slim-buster
+
+# Set the working directory in the container to /app
+WORKDIR /app
+
+# Install OpenSCAD and nicescad
+RUN apt-get update && apt-get install -y openscad && pip install nicescad
+
+# Make port 9858 available to the world outside this container
+EXPOSE 9858
+
+# Run nicescad when the container launches
+CMD ["nicescad", "--serve", "--bind", "0.0.0.0:9858"]
