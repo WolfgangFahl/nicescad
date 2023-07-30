@@ -8,6 +8,14 @@ services:
       dockerfile: Dockerfile.nicescad
     ports:
       - 9858:9858
+  blockscad:
+    image: blockscad-service
+    container_name: blockscad_service
+    build:
+      context: .
+      dockerfile: Dockerfile.blockscad
+    ports:
+      - 8094:8080
   p2scad:
     image: p2scad-service
     container_name: p2scad_service

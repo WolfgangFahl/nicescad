@@ -1,0 +1,20 @@
+# Use a base image with both Node.js and Python installed
+FROM nikolaik/python-nodejs:latest
+
+# Set working directory
+WORKDIR /app
+
+# Install git
+RUN apt-get update && apt-get install -y git
+
+# Clone the repository
+RUN git clone https://github.com/EinsteinsWorkshop/BlocksCAD.git .
+
+# Install dependencies
+RUN npm install
+
+# Expose the listening port
+EXPOSE 9000
+
+# Start the application with http.server
+CMD python -m http.server 9000

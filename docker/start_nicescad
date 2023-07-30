@@ -16,101 +16,109 @@
 # Author: ChatGPT-4 by OpenAI
 # Date: 2023-07-30
 
+# Variables
+nicescad_port=9858
+p2scad_port=8093
+blockscad_port=9000
+log_file="/var/log/nicescad/nicescad.log"
+nocache=""
+timeout=5
+
 function usage {
-    echo "Usage: $0 start|stop|restart|rebuild|bash [OPTIONS]"
-    echo "   start|stop|restart|rebuild|bash: Start, stop, restart, rebuild and start the services, or start a bash shell in a service container"
+    echo "Usage: $0 {start|stop|restart|bash|rebuild} [--nicescad-port <port number>] [--p2scad-port <port number>] [--blockscad-port <port number>] [--log-file <log file path>] [--timeout <seconds>]"
+    echo "   start|stop|restart|bash|rebuild: Start, stop, restart, rebuild the services, or start a bash shell in a service container"
     echo "   OPTIONS:"
     echo "     --nicescad-port : Port for the nicescad service (default 9858)"
     echo "     --p2scad-port   : Port for the p2scad service (default 8093)"
-    echo "     --service       : Specify the service for the bash command (nicescad or p2scad)"
-}
-nicescad_port=9858
-p2scad_port=8093
-log_file="/var/log/nicescad/nicescad.log"
-
-function usage {
-  echo "Usage: $0 {start|stop|restart|bash|rebuild} [--nicescad-port <port number>] [--p2scad-port <port number>] [--log-file <log file path>]"
-  exit 1
+    echo "     --blockscad-port : Port for the blockscad service (default 9000)"
+    echo "     --log-file      : Path to the log file (default /var/log/nicescad/nicescad.log)"
+    echo "     --timeout       : Timeout for service startup (default 5 seconds)"
 }
 
 function start_services {
-  echo "Starting services..."
-  sudo mkdir -p $(dirname "${log_file}")
-  sudo touch ${log_file}
-  sudo rm ${log_file}
-  sudo touch ${log_file}
-  sudo chown ${USER}:$(id -gn) ${log_file}
-  nohup docker-compose up > ${log_file} 2>&1 &
-  sleep 5
-  check_services
+    echo "Starting services..."
+    # Setup the log file
+    sudo mkdir -p $(dirname "${log_file}")
+    sudo touch ${log_file}
+    sudo rm ${log_file}
+    sudo touch ${log_file}
+    sudo chown ${USER}:$(id -gn) ${log_file}
+
+    # Start the services
+    nohup docker-compose up > ${log_file} 2>&1 &
+    echo "Please wait while services are starting..."
+    end=$((SECONDS+timeout))
+    while [ $SECONDS -lt $end ]; do
+        sleep 0.5
+        echo -n "."
+        if check_services; then
+            break
+        fi
+    done
+    echo
 }
 
 function stop_services {
-  echo "Stopping services..."
-  docker-compose down
+    echo "Stopping services..."
+    docker-compose down
 }
 
 function rebuild_services {
-  echo "Rebuilding services..."
-  docker-compose down
-  docker-compose build --no-cache
-  start_services
+    echo "Rebuilding services..."
+    docker-compose down
+    docker-compose build ${nocache}
+    start_services
 }
 
 function bash_into {
-  service=$1
-  docker exec -it ${service}_service bash
+    service=$1
+    docker exec -it ${service}_service bash
 }
 
 function check_services {
-  echo "Checking if services have started..."
-  if ! docker ps | grep -q nicescad_service; then
-    echo "nicescad service failed to start. Check ${log_file} for more details."
-  else
-    echo "nicescad service started successfully."
-  fi
-
-  if ! docker ps | grep -q p2scad_service; then
-    echo "p2scad service failed to start. Check ${log_file} for more details."
-  else
-    echo "p2scad service started successfully."
-  fi
+    local fail=0
+    # Check if the services have started
+    for service in nicescad p2scad blockscad; do
+        if ! docker ps | grep -q ${service}_service; then
+            echo "${service} service failed to start."
+            fail=1
+        fi
+    done
+    if [ ${fail} -eq 0 ]; then
+        echo "All services started successfully."
+    fi
+    return ${fail}
 }
 
-if [ $# -lt 1 ]
-then
-  usage
-else
-  while [ "$1" != "" ]
-  do
+# Main logic
+if [ $# -lt 1 ]; then
+    usage
+    exit 1
+fi
+
+while [ "$1" != "" ]; do
     option="$1"
     case ${option} in
-      start) start_services ;;
-      stop) stop_services ;;
-      restart) stop_services ; start_services ;;
-      bash)
-        if [ $# -lt 2 ]
-        then
-          echo "You need to specify a service name (nicescad or p2scad)"
-          exit 1
-        fi
-        bash_into $2
-        ;;
-      rebuild) rebuild_services ;;
-      --nicescad-port)
-        shift
-        nicescad_port=$1
-        ;;
-      --p2scad-port)
-        shift
-        p2scad_port=$1
-        ;;
-      --log-file)
-        shift
-        log_file=$1
-        ;;
-      *) usage ;;
+        start) start_services ;;
+        stop) stop_services ;;
+        restart) stop_services ; start_services ;;
+        bash)
+            if [ $# -lt 2 ]; then
+                echo "You need to specify a service name (nicescad, p2scad or blockscad)"
+                exit 1
+            fi
+            bash_into $2
+            ;;
+        rebuild) rebuild_services ;;
+        --nicescad-port) shift; nicescad_port=$1 ;;
+        --p2scad-port) shift; p2scad_port=$1 ;;
+        --blockscad-port) shift; blockscad_port=$1 ;;
+        --log-file) shift; log_file=$1 ;;
+        --timeout) shift; timeout=$1 ;;
+        *) usage ;;
     esac
     shift
-  done
-fi
+done
+
+
+
