@@ -48,7 +48,10 @@ class FileSelector():
         """
         path = os.path.abspath(path)
         id_string = '.'.join(map(str, id_path))
-        items = os.listdir(path)
+        try:
+            items = os.listdir(path)
+        except PermissionError:
+            items = []
         children = []
         item_counter = 1  # counter for generating child id
     
