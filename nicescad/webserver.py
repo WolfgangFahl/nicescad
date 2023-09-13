@@ -18,7 +18,6 @@ import requests
 import traceback
 from nicegui.events import ColorPickEventArguments
 
-
 class WebServer:
     """WebServer class that manages the server and handles OpenScad operations.
 
