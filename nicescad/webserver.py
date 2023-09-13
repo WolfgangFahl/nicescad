@@ -421,6 +421,7 @@ example();"""
         """
         self.args=args
         self.is_local=args.local
-        self.root_path=os.path.abspath(args.root_path) 
+        root_path=args.root_path if args.root_path else WebServer.examples_path()
+        self.root_path=os.path.abspath(root_path) 
         self.render_on_load=args.render_on_load
         ui.run(title=Version.name, host=args.host, port=args.port, show=args.client,reload=False)

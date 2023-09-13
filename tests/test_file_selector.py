@@ -4,7 +4,7 @@ Created on 2023-07-23
 @author: wf
 '''
 from tests.basetest import Basetest
-from nicescad.file_selector import FileSelector
+from ngwidgets.file_selector import FileSelector
 from nicescad.webserver import WebServer
 import json
 
