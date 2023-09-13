@@ -7,8 +7,8 @@ from typing import Optional
 from nicescad.version import Version
 from nicescad.openscad import OpenScad
 from nicescad.axes_helper import AxesHelper
-from nicescad.file_selector import FileSelector
-from nicescad.local_filepicker import LocalFilePicker
+from ngwidgets.file_selector import FileSelector
+from ngwidgets.local_filepicker import LocalFilePicker
 from nicegui import ui, app
 from pathlib import Path
 
