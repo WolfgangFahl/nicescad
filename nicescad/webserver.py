@@ -256,7 +256,7 @@ example();"""
                             self.html_view = ui.html()
                             self.html_view.visible=False
                             self.log_view = ui.log(max_lines=20).classes('w-full h-40')        
-        self.setup_footer()        
+        await self.setup_footer()        
         if self.args.input:
             await self.read_and_optionally_render(self.args.input)
         
