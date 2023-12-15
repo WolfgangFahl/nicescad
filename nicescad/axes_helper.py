@@ -5,7 +5,7 @@ class AxesHelper:
     for creating 3D scenes. It creates line objects for the x, y, and z axes,
     each with a distinct color, and provides methods for changing these colors and toggling their visibility.
 
-    The original JavaScript code, which this Python code is based on, can be found at: 
+    The original JavaScript code, which this Python code is based on, can be found at:
     https://raw.githubusercontent.com/mrdoob/three.js/master/src/helpers/AxesHelper.js
     The JavaScript code was refactored into this Python version by OpenAI's ChatGPT.
 
@@ -43,6 +43,7 @@ class AxesHelper:
         axes_helper.set_colors(x_axis_color='#FF0000', y_axis_color='#00FF00', z_axis_color='#0000FF')  # set colors for x, y, and z axes
         axes_helper.toggle_axes()  # toggle visibility of the axes
     """
+
     def __init__(self, scene: "ui.scene", size: float = 10.0):
         """
         The constructor for AxesHelper class.
@@ -54,18 +55,26 @@ class AxesHelper:
         self.scene = scene
         self.size = size
         self.vertices = [
-            (0, 0, 0),    (size, 0, 0),
-            (0, 0, 0),    (0, size, 0),
-            (0, 0, 0),    (0, 0, size)
+            (0, 0, 0),
+            (size, 0, 0),
+            (0, 0, 0),
+            (0, size, 0),
+            (0, 0, 0),
+            (0, 0, size),
         ]
 
-        self.axis_names = ['x', 'y', 'z']
+        self.axis_names = ["x", "y", "z"]
         self.lines = []
         self.axes_visible = False
-        self.color_by_name = {'x': '#FF0000', 'y': '#00FF00', 'z': '#0000FF'}
+        self.color_by_name = {"x": "#FF0000", "y": "#00FF00", "z": "#0000FF"}
         self.toggle_axes()
 
-    def set_colors(self, x_axis_color: str = '#FF0000', y_axis_color: str = '#00FF00', z_axis_color: str = '#0000FF'):
+    def set_colors(
+        self,
+        x_axis_color: str = "#FF0000",
+        y_axis_color: str = "#00FF00",
+        z_axis_color: str = "#0000FF",
+    ):
         """
         A method to set colors of the axes.
 
@@ -74,7 +83,7 @@ class AxesHelper:
             y_axis_color (str): Color of the y-axis.
             z_axis_color (str): Color of the z-axis.
         """
-        self.color_by_name = {'x': x_axis_color, 'y': y_axis_color, 'z': z_axis_color}
+        self.color_by_name = {"x": x_axis_color, "y": y_axis_color, "z": z_axis_color}
         for idx, line in enumerate(self.lines):
             line.material(self.color_by_name[self.axis_names[idx]])
 
@@ -95,7 +104,9 @@ class AxesHelper:
             # Axes are currently not visible, so add them
             with self.scene:
                 for i in range(3):
-                    line = self.scene.line(self.vertices[2 * i], self.vertices[2 * i + 1])
+                    line = self.scene.line(
+                        self.vertices[2 * i], self.vertices[2 * i + 1]
+                    )
                     line.name = self.axis_names[i]
                     line.material(self.color_by_name[line.name])
                     self.lines.append(line)

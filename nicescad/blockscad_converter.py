@@ -24,11 +24,13 @@ The code was created by the OpenAI ChatGPT model in response to the following pr
 - "If the OpenAI API key is not found, throw an exception."
 """
 
-import os
 import json
-import openai
-from typing import Union
+import os
 from pathlib import Path
+from typing import Union
+
+import openai
+
 
 class BlockscadConverter:
     """
@@ -67,26 +69,28 @@ class BlockscadConverter:
             path to the output SCAD file if conversion is successful, None otherwise
         """
         # Load the API key from the environment or a JSON file
-        openai_api_key = os.getenv('OPENAI_API_KEY')
+        openai_api_key = os.getenv("OPENAI_API_KEY")
         json_file = Path.home() / ".openai" / "openai_api_key.json"
 
         if openai_api_key is None and json_file.is_file():
             with open(json_file, "r") as file:
                 data = json.load(file)
-                openai_api_key = data.get('OPENAI_API_KEY')
+                openai_api_key = data.get("OPENAI_API_KEY")
 
         if openai_api_key is None:
-            raise ValueError("No OpenAI API key found. Please set the 'OPENAI_API_KEY' environment variable or store it in `~/.openai/openai_api_key.json`.")
+            raise ValueError(
+                "No OpenAI API key found. Please set the 'OPENAI_API_KEY' environment variable or store it in `~/.openai/openai_api_key.json`."
+            )
 
         openai.api_key = openai_api_key
 
         # Read the XML file
-        with open(self.xml_path, 'r') as file:
+        with open(self.xml_path, "r") as file:
             xml_content = file.read()
 
         # Check if the XML content is a BlockSCAD XML
-        if "<xml xmlns=\"https://blockscad3d.com" not in xml_content:
-            msg=(f"The file at {self.xml_path} is not a valid BlockSCAD XML file.")
+        if '<xml xmlns="https://blockscad3d.com' not in xml_content:
+            msg = f"The file at {self.xml_path} is not a valid BlockSCAD XML file."
             raise Exception(msg)
 
         # Use the API to convert the XML to SCAD
@@ -116,16 +120,15 @@ Make sure commands end with a semicolon.
 
 Here is the BlockSCAD XML:\n{xml_content}
 """,
-            
             temperature=0.5,
-            max_tokens=1000
+            max_tokens=1000,
         )
 
         scad_content = response.choices[0].text.strip()
 
         # A very basic check to see if the SCAD content seems okay
         if not scad_content.startswith("// OpenSCAD"):
-            msg=(f"The conversion of {self.xml_path} failed - the // OpenSCAD comment is missing in:\n {scad_content}.")
+            msg = f"The conversion of {self.xml_path} failed - the // OpenSCAD comment is missing in:\n {scad_content}."
             raise Exception(msg)
 
         # Write the SCAD code to the output file
