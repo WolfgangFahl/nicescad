@@ -1,0 +1,8 @@
+# Components
+# WF 2023-12-17
+components:
+- name: openscad.py
+  source: /nicescad/openscad.py
+  issue: 1
+  demo_url: http://nicescad.bitplan.com/
+  demo_image_url: https://github.com/WolfgangFahl/nicescad/assets/1336221/599d4e50-b148-44ac-b517-a1f1809fdfac
