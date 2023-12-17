@@ -4,6 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nicescad"
+description = "nicescad brings OpenScad to the browser (again)"
+keywords = ["nicegui", "openscad", "scad", "3D-printing"]
 authors = [
   {name = "Wolfgang Fahl", email = "wf@bitplan.com"}
 ]
@@ -47,7 +49,7 @@ classifiers=[
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License"
     ]
-dynamic = ["version", "description"]
+dynamic = ["version"]
 [tool.hatch.version]
 path = "nicescad/__init__.py"
 
