@@ -41,20 +41,6 @@ class NiceScadWebServer(InputWebserver):
     def __init__(self):
         """Constructs all the necessary attributes for the WebServer object."""
         InputWebserver.__init__(self, config=NiceScadWebServer.get_config())
-        self.oscad = OpenScad(
-            scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
-// default number of facets for arc generation
-$fn=30;
-"""
-        )
-        self.code = """// nicescad example
-module example() {
-  translate([0,0,15]) {
-     cube(30,center=true);
-     sphere(20);
-  }
-}
-example();"""
         app.add_static_files("/stl", self.oscad.tmp_dir)
 
             
@@ -99,6 +85,20 @@ class NiceScadSolution(InputWebSolution):
         self.do_trace = True
         self.html_view = None
         self.axes_view = None
+        self.oscad = OpenScad(
+        scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
+// default number of facets for arc generation
+$fn=30;
+"""
+        )
+        self.code = """// nicescad example
+module example() {
+  translate([0,0,15]) {
+     cube(30,center=true);
+     sphere(20);
+  }
+}
+example();"""
 
     async def render(self, _click_args=None):
         """Renders the OpenScad string and updates the 3D scene with the result.
