@@ -41,6 +41,12 @@ class NiceScadWebServer(InputWebserver):
     def __init__(self):
         """Constructs all the necessary attributes for the WebServer object."""
         InputWebserver.__init__(self, config=NiceScadWebServer.get_config())
+        self.oscad = OpenScad(
+            scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
+// default number of facets for arc generation
+$fn=30;
+"""
+        )
         app.add_static_files("/stl", self.oscad.tmp_dir)
 
             
@@ -77,18 +83,15 @@ class NiceScadSolution(InputWebSolution):
             webserver (NiceScadWebServer): The webserver instance associated with this context.
             client (Client): The client instance this context is associated with.
         """
+        super().__init__(webserver, client)  # Call to the superclass constructor
         self.input = "example.scad"
         self.stl_name = "result.stl"
         self.stl_color = "#57B6A9"
         self.stl_object = None      
+        self.do_trace = True
         self.html_view = None
         self.axes_view = None
-        self.oscad = OpenScad(
-            scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
-// default number of facets for arc generation
-$fn=30;
-"""
-        )
+        self.oscad=webserver.oscad
         self.code = """// nicescad example
 module example() {
   translate([0,0,15]) {
@@ -97,9 +100,6 @@ module example() {
   }
 }
 example();"""
-        super().__init__(webserver, client)  # Call to the superclass constructor
-        self.do_trace = True
-
 
     async def render(self, _click_args=None):
         """Renders the OpenScad string and updates the 3D scene with the result.
