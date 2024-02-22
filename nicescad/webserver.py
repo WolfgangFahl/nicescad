@@ -7,10 +7,10 @@ import os
 from pathlib import Path
 
 from ngwidgets.file_selector import FileSelector
-from ngwidgets.input_webserver import InputWebserver
+from ngwidgets.input_webserver import InputWebserver, InputWebSolution
 from ngwidgets.local_filepicker import LocalFilePicker
-from ngwidgets.webserver import WebserverConfig
-from nicegui import app, ui
+from ngwidgets.webserver import WebserverConfig, WebSolution
+from nicegui import app, ui, Client
 from nicegui.events import ColorPickEventArguments
 
 from nicescad.axes_helper import AxesHelper
@@ -18,7 +18,7 @@ from nicescad.openscad import OpenScad
 from nicescad.version import Version
 
 
-class WebServer(InputWebserver):
+class NiceScadWebServer(InputWebserver):
     """WebServer class that manages the server and handles OpenScad operations.
 
     Attributes:
@@ -27,15 +27,20 @@ class WebServer(InputWebserver):
 
     @classmethod
     def get_config(cls) -> WebserverConfig:
-        copy_right = "(c)2023 Wolfgang Fahl"
+        copy_right = "(c)2023-2024 Wolfgang Fahl"
         config = WebserverConfig(
-            copy_right=copy_right, version=Version(), default_port=9858
+            copy_right=copy_right, 
+            version=Version(), 
+            default_port=9858,
+            short_name="nicescad",
         )
-        return config
+        server_config = WebserverConfig.get(config)
+        server_config.solution_class = NiceScadSolution
+        return server_config
 
     def __init__(self):
         """Constructs all the necessary attributes for the WebServer object."""
-        InputWebserver.__init__(self, config=WebServer.get_config())
+        InputWebserver.__init__(self, config=NiceScadWebServer.get_config())
         self.oscad = OpenScad(
             scad_prepend="""//https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_Language_Features#$fa,_$fs_and_$fn
 // default number of facets for arc generation
@@ -50,14 +55,7 @@ module example() {
   }
 }
 example();"""
-        self.input = "example.scad"
-        self.stl_name = "result.stl"
-        self.stl_color = "#57B6A9"
-        self.stl_object = None
         app.add_static_files("/stl", self.oscad.tmp_dir)
-        self.do_trace = True
-        self.html_view = None
-        self.axes_view = None
 
         @ui.page("/")
         async def home():
@@ -66,6 +64,18 @@ example();"""
         @ui.page("/settings")
         async def settings():
             await self.settings()
+            
+    def configure_run(self):
+        root_path = (
+            self.args.root_path if self.args.root_path else NiceScadWebServer.examples_path()
+        )
+        self.root_path = os.path.abspath(root_path)
+        self.allowed_urls = [
+            "https://raw.githubusercontent.com/WolfgangFahl/nicescad/main/examples/",
+            "https://raw.githubusercontent.com/openscad/openscad/master/examples/",
+            self.examples_path(),
+            self.root_path,
+        ]
 
     @classmethod
     def examples_path(cls) -> str:
@@ -73,6 +83,29 @@ example();"""
         path = os.path.join(os.path.dirname(__file__), "../nicescad_examples")
         path = os.path.abspath(path)
         return path
+    
+class NiceScadSolution(InputWebSolution):
+    """
+    the NiceScad solution
+    """
+
+    def __init__(self, webserver: NiceScadWebServer, client: Client):
+        """
+        Initialize the solution
+
+        Calls the constructor of the base solution
+        Args:
+            webserver (NiceScadWebServer): The webserver instance associated with this context.
+            client (Client): The client instance this context is associated with.
+        """
+        super().__init__(webserver, client)  # Call to the superclass constructor
+        self.input = "example.scad"
+        self.stl_name = "result.stl"
+        self.stl_color = "#57B6A9"
+        self.stl_object = None      
+        self.do_trace = True
+        self.html_view = None
+        self.axes_view = None
 
     async def render(self, _click_args=None):
         """Renders the OpenScad string and updates the 3D scene with the result.
@@ -123,7 +156,7 @@ example();"""
             self.stl_link.visible = False
         except BaseException as e:
             self.code = None
-            self.handle_exception(e, self.do_trace)
+            self.handle_exception(e)
 
     def save_file(self):
         """Saves the current code to the last input file, if it was a local path."""
@@ -231,10 +264,17 @@ example();"""
         except BaseException as ex:
             self.handleExeption(ex)
         pass
+    
+    def prepare_ui(self):
+        """
+        handle the command line arguments
+        """
+        self.setup_pygments()
+        InputWebSolution.prepare_ui(self)
 
     async def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
-        self.setup_pygments()
+        
         self.setup_menu()
         with ui.column():
             with ui.splitter() as splitter:
@@ -327,14 +367,4 @@ example();"""
         )
         sp_input.bind_value(self.oscad, "scad_prepend")
 
-    def configure_run(self):
-        root_path = (
-            self.args.root_path if self.args.root_path else WebServer.examples_path()
-        )
-        self.root_path = os.path.abspath(root_path)
-        self.allowed_urls = [
-            "https://raw.githubusercontent.com/WolfgangFahl/nicescad/main/examples/",
-            "https://raw.githubusercontent.com/openscad/openscad/master/examples/",
-            self.examples_path(),
-            self.root_path,
-        ]
+    

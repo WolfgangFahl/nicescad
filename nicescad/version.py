@@ -14,7 +14,7 @@ class Version(object):
     name = "nicescad"
     version = nicescad.__version__
     date = "2023-07-19"
-    updated = "2023-12-17"
+    updated = "2024-02-12"
     description = "nicescad brings OpenScad to the browser (again)"
 
     authors = "Wolfgang Fahl"
