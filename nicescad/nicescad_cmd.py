@@ -38,7 +38,7 @@ class NiceScadCmd(WebserverCmd):
         parser.add_argument(
             "-rp",
             "--root_path",
-            default=WebServer.examples_path(),
+            default=NiceScadWebServer.examples_path(),
             help="path to pdf files [default: %(default)s]",
         )
         return parser
