@@ -57,13 +57,6 @@ module example() {
 example();"""
         app.add_static_files("/stl", self.oscad.tmp_dir)
 
-        @ui.page("/")
-        async def home():
-            await self.home()
-
-        @ui.page("/settings")
-        async def settings():
-            await self.settings()
             
     def configure_run(self):
         root_path = (
