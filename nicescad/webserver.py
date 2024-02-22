@@ -262,9 +262,9 @@ class NiceScadSolution(InputWebSolution):
         """
         handle the command line arguments
         """
-        self.setup_pygments()
         InputWebSolution.prepare_ui(self)
-
+        self.setup_pygments()
+    
     async def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
         
