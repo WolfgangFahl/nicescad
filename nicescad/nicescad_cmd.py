@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 
 from ngwidgets.cmd import WebserverCmd
 
-from nicescad.webserver import WebServer
+from nicescad.webserver import NiceScadWebServer
 
 
 class NiceScadCmd(WebserverCmd):
@@ -20,8 +20,8 @@ class NiceScadCmd(WebserverCmd):
         """
         constructor
         """
-        config = WebServer.get_config()
-        WebserverCmd.__init__(self, config, WebServer, DEBUG)
+        config = NiceScadWebServer.get_config()
+        WebserverCmd.__init__(self, config, NiceScadWebServer, DEBUG)
         pass
 
     def getArgParser(self, description: str, version_msg) -> ArgumentParser:
