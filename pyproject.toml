@@ -27,7 +27,7 @@ dependencies = [
     # fastapi
 	# uvicorn
     "nicegui>=1.4.15",
-    "ngwidgets>=0.12.4",
+    "ngwidgets>=0.12.5",
     # openai
     "openai",
     # pydantic
