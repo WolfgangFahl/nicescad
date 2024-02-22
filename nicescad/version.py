@@ -4,8 +4,9 @@ Created on 2023-06-19
 @author: wf
 """
 import nicescad
+from dataclasses import dataclass
 
-
+@dataclass
 class Version(object):
     """
     Version handling for nicescad
