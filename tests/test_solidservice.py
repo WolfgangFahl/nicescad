@@ -1,13 +1,16 @@
-'''
+"""
 Created on 2023-07-30
 
 @author: wf
-'''
+"""
 import unittest
-from tests.basetest import Basetest
-from nicescad.solidservice import SolidConverter, FastAPIServer
+
 from fastapi.testclient import TestClient
+
 import nicescad as nicescad
+from nicescad.solidservice import FastAPIServer, SolidConverter
+from tests.basetest import Basetest
+
 
 class TestSolidConverter(Basetest):
     """
@@ -28,7 +31,7 @@ class TestSolidConverter(Basetest):
 
     def test_conversion(self):
         """
-        Test whether the SolidConverter returns the expected OpenSCAD code for a 
+        Test whether the SolidConverter returns the expected OpenSCAD code for a
         given Python code input.
         """
         # The Python code to be converted
@@ -40,19 +43,19 @@ class TestSolidConverter(Basetest):
         converter = SolidConverter(python_code)
 
         # Assert that the conversion result matches the expected OpenSCAD code
-        scad=converter.convert_to_openscad()
-        debug=self.debug
+        scad = converter.convert_to_openscad()
+        debug = self.debug
         if debug:
             print(scad)
         scad = "".join(scad.split())
         if debug:
             print(scad)
         self.assertEqual(scad, expected_openscad_code)
-        
+
     def check_server(self):
         """
         Check whether the FastAPI server is running and returns the expected version of the nicescad package.
-    
+
         Returns:
         bool -- True if the server is running and the version is correct, False otherwise.
         """
@@ -61,15 +64,15 @@ class TestSolidConverter(Basetest):
             if response.status_code != 200:
                 return False
             data = response.json()
-            if 'version' not in data or data['version'] != nicescad.__version__:
+            if "version" not in data or data["version"] != nicescad.__version__:
                 return False
             return True
         except:
             return False
-    
+
     def test_endpoint(self):
         """
-        Test whether the FastAPI endpoint returns the expected OpenSCAD code for a 
+        Test whether the FastAPI endpoint returns the expected OpenSCAD code for a
         given Python code input.
         """
         self.server = FastAPIServer()
@@ -77,7 +80,7 @@ class TestSolidConverter(Basetest):
         if not self.check_server():
             print("Server not available")
             return
-        
+
         python_code = "difference()(cube(10),sphere(15))"
         expected_openscad_code = """difference(){cube(size=10);sphere(r=15);}"""
 
@@ -85,11 +88,11 @@ class TestSolidConverter(Basetest):
 
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn('openscad_code', data)
-        received_openscad_code = "".join(data['openscad_code'].split())
+        self.assertIn("openscad_code", data)
+        received_openscad_code = "".join(data["openscad_code"].split())
 
         self.assertEqual(received_openscad_code, expected_openscad_code)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

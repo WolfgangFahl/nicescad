@@ -3,8 +3,10 @@ Created on 2023-06-19
 
 @author: wf
 """
-import nicescad
 from dataclasses import dataclass
+
+import nicescad
+
 
 @dataclass
 class Version(object):

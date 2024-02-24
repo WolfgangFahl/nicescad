@@ -10,7 +10,7 @@ from ngwidgets.file_selector import FileSelector
 from ngwidgets.input_webserver import InputWebserver, InputWebSolution
 from ngwidgets.local_filepicker import LocalFilePicker
 from ngwidgets.webserver import WebserverConfig, WebSolution
-from nicegui import app, ui, Client
+from nicegui import Client, app, ui
 from nicegui.events import ColorPickEventArguments
 
 from nicescad.axes_helper import AxesHelper
@@ -29,8 +29,8 @@ class NiceScadWebServer(InputWebserver):
     def get_config(cls) -> WebserverConfig:
         copy_right = "(c)2023-2024 Wolfgang Fahl"
         config = WebserverConfig(
-            copy_right=copy_right, 
-            version=Version(), 
+            copy_right=copy_right,
+            version=Version(),
             default_port=9858,
             short_name="nicescad",
         )
@@ -49,10 +49,11 @@ $fn=30;
         )
         app.add_static_files("/stl", self.oscad.tmp_dir)
 
-            
     def configure_run(self):
         root_path = (
-            self.args.root_path if self.args.root_path else NiceScadWebServer.examples_path()
+            self.args.root_path
+            if self.args.root_path
+            else NiceScadWebServer.examples_path()
         )
         self.root_path = os.path.abspath(root_path)
         self.allowed_urls = [
@@ -68,7 +69,8 @@ $fn=30;
         path = os.path.join(os.path.dirname(__file__), "../nicescad_examples")
         path = os.path.abspath(path)
         return path
-    
+
+
 class NiceScadSolution(InputWebSolution):
     """
     the NiceScad solution
@@ -87,11 +89,11 @@ class NiceScadSolution(InputWebSolution):
         self.input = "example.scad"
         self.stl_name = "result.stl"
         self.stl_color = "#57B6A9"
-        self.stl_object = None      
+        self.stl_object = None
         self.do_trace = True
         self.html_view = None
         self.axes_view = None
-        self.oscad=webserver.oscad
+        self.oscad = webserver.oscad
         self.code = """// nicescad example
 module example() {
   translate([0,0,15]) {
@@ -258,17 +260,17 @@ example();"""
         except BaseException as ex:
             self.handleExeption(ex)
         pass
-    
+
     def prepare_ui(self):
         """
         handle the command line arguments
         """
         InputWebSolution.prepare_ui(self)
         self.setup_pygments()
-    
+
     async def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
-        
+
         self.setup_menu()
         with ui.column():
             with ui.splitter() as splitter:
@@ -301,7 +303,7 @@ example();"""
                             self.example_selector = FileSelector(
                                 path=self.root_path,
                                 handler=self.read_and_optionally_render,
-                                extensions=extensions
+                                extensions=extensions,
                             )
                             self.input_input = ui.input(
                                 value=self.input, on_change=self.input_changed
@@ -360,5 +362,3 @@ example();"""
             "cols=80"
         )
         sp_input.bind_value(self.oscad, "scad_prepend")
-
-    

@@ -30,16 +30,19 @@ Date: July 25, 2023
 """
 
 import tempfile
-from tests.basetest import Basetest
 from pathlib import Path
-from nicescad.webserver import NiceScadWebServer
+
 from nicescad.blockscad_converter import BlockscadConverter
+from nicescad.webserver import NiceScadWebServer
+from tests.basetest import Basetest
+
 
 class TestBlockscadConverter(Basetest):
     """
     test the Blockscad Converter
-    
+
     """
+
     def setUp(self, debug=True, profile=True):
         """
         Set up the test environment. Initializes paths for BlockSCAD XML files and expected SCAD files.
@@ -50,22 +53,24 @@ class TestBlockscadConverter(Basetest):
         """
         Basetest.setUp(self, debug, profile)
         self.examples_path = NiceScadWebServer.examples_path()
-        self.blockscad_dir = Path(self.examples_path) / 'blockscad'
-        self.blockscad_converted_dir = Path(self.examples_path) / 'scad' / 'blockscad_converted'
-    
-    def compare_strings_ignore_whitespace(self,str1, str2):
+        self.blockscad_dir = Path(self.examples_path) / "blockscad"
+        self.blockscad_converted_dir = (
+            Path(self.examples_path) / "scad" / "blockscad_converted"
+        )
+
+    def compare_strings_ignore_whitespace(self, str1, str2):
         """
         Compares two strings for equality, ignoring any whitespace.
-    
+
         Args:
             str1 (str): The first string to compare.
             str2 (str): The second string to compare.
-    
+
         Returns:
             bool: True if the strings are equal when ignoring whitespace, False otherwise.
         """
-        return ''.join(str1.split()) == ''.join(str2.split())
-    
+        return "".join(str1.split()) == "".join(str2.split())
+
     def test_convert_to_scad(self):
         """
         Test the conversion of BlockSCAD XML files to SCAD files. Compares the content of the output SCAD files
@@ -76,28 +81,36 @@ class TestBlockscadConverter(Basetest):
         # only comment out when really testing since openai API usage
         # has a cost
         return
-        blockscad_files = list(self.blockscad_dir.glob('*.xml'))
-        self.assertGreater(len(blockscad_files), 0, "No BlockSCAD XML files found for testing.")
-        failures=[]
+        blockscad_files = list(self.blockscad_dir.glob("*.xml"))
+        self.assertGreater(
+            len(blockscad_files), 0, "No BlockSCAD XML files found for testing."
+        )
+        failures = []
         for xml_file in blockscad_files:
             converter = BlockscadConverter(str(xml_file))
             with tempfile.TemporaryDirectory() as temp_dir:
-                scad_file = Path(temp_dir) / (xml_file.stem + '.scad')
-                ok=False
-                expected_scad_file = self.blockscad_converted_dir / (xml_file.stem + '.scad')
+                scad_file = Path(temp_dir) / (xml_file.stem + ".scad")
+                ok = False
+                expected_scad_file = self.blockscad_converted_dir / (
+                    xml_file.stem + ".scad"
+                )
                 try:
                     converter.convert_to_scad(str(scad_file))
-                    with open(scad_file, 'r') as output_file, open(expected_scad_file, 'r') as expected_file:
+                    with open(scad_file, "r") as output_file, open(
+                        expected_scad_file, "r"
+                    ) as expected_file:
                         output_content = output_file.read()
                         expected_content = expected_file.read()
-                        ok = self.compare_strings_ignore_whitespace(output_content, expected_content)
+                        ok = self.compare_strings_ignore_whitespace(
+                            output_content, expected_content
+                        )
                         if not ok:
                             print(f"Output content: \n{output_content}")
                             print(f"Expected content: \n{expected_content}")
                 except Exception as ex:
                     print(str(ex))
-                    pass            
+                    pass
                 if not ok:
                     failures.append(expected_scad_file)
-                            
-        self.assertEqual(0,len(failures))                
+
+        self.assertEqual(0, len(failures))
