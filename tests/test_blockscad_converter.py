@@ -33,10 +33,14 @@ import unittest
 import tempfile
 from tests.basetest import Basetest
 from pathlib import Path
-from nicescad.webserver import WebServer
+from nicescad.webserver import NiceScadWebServer
 from nicescad.blockscad_converter import BlockscadConverter
 
 class TestBlockscadConverter(Basetest):
+    """
+    test the Blockscad Converter
+    
+    """
     def setUp(self, debug=True, profile=True):
         """
         Set up the test environment. Initializes paths for BlockSCAD XML files and expected SCAD files.
@@ -46,7 +50,7 @@ class TestBlockscadConverter(Basetest):
             profile (bool): If True, the test is profiled. Defaults to True.
         """
         Basetest.setUp(self, debug, profile)
-        self.examples_path = WebServer.examples_path()
+        self.examples_path = NiceScadWebServer.examples_path()
         self.blockscad_dir = Path(self.examples_path) / 'blockscad'
         self.blockscad_converted_dir = Path(self.examples_path) / 'scad' / 'blockscad_converted'
     
@@ -98,6 +102,3 @@ class TestBlockscadConverter(Basetest):
                     failures.append(expected_scad_file)
                             
         self.assertEqual(0,len(failures))                
-
-if __name__ == '__main__':
-    unittest.main()
