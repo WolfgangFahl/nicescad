@@ -29,7 +29,6 @@ Author: OpenAI ChatGPT
 Date: July 25, 2023
 """
 
-import unittest
 import tempfile
 from tests.basetest import Basetest
 from pathlib import Path
