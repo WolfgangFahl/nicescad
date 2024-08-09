@@ -96,9 +96,10 @@ class TestBlockscadConverter(Basetest):
                 )
                 try:
                     converter.convert_to_scad(str(scad_file))
-                    with open(scad_file, "r") as output_file, open(
-                        expected_scad_file, "r"
-                    ) as expected_file:
+                    with (
+                        open(scad_file, "r") as output_file,
+                        open(expected_scad_file, "r") as expected_file,
+                    ):
                         output_content = output_file.read()
                         expected_content = expected_file.read()
                         ok = self.compare_strings_ignore_whitespace(

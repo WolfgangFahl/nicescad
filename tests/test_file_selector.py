@@ -3,6 +3,7 @@ Created on 2023-07-23
 
 @author: wf
 """
+
 import json
 
 from ngwidgets.file_selector import FileSelector
@@ -25,7 +26,7 @@ class TestFileSelector(Basetest):
         extensions = {"scad": ".scad", "xml": ".xml"}
         file_selector = FileSelector(file_path, extensions=extensions)
         debug = self.debug
-        #debug = True
+        # debug = True
         if debug:
             print(json.dumps(file_selector.tree_structure, indent=2))
         self.assertTrue("id" in file_selector.tree_structure)

@@ -3,6 +3,7 @@ Created on 2023-06-19
 
 @author: wf
 """
+
 from dataclasses import dataclass
 
 import nicescad
@@ -17,7 +18,7 @@ class Version(object):
     name = "nicescad"
     version = nicescad.__version__
     date = "2023-07-19"
-    updated = "2024-02-12"
+    updated = "2024-09-09"
     description = "nicescad brings OpenScad to the browser (again)"
 
     authors = "Wolfgang Fahl"
@@ -26,7 +27,7 @@ class Version(object):
     chat_url = "https://github.com/WolfgangFahl/nicescad/discussions"
     cm_url = "https://github.com/WolfgangFahl/nicescad"
 
-    license = f"""Copyright 2023 contributors. All rights reserved.
+    license = f"""Copyright 2023-2024 contributors. All rights reserved.
 
   Licensed under the Apache License 2.0
   http://www.apache.org/licenses/LICENSE-2.0

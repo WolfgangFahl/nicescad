@@ -26,8 +26,8 @@ dependencies = [
 	# nicegui
     # fastapi
 	# uvicorn
-    "nicegui>=1.4.15",
-    "ngwidgets>=0.12.5",
+    "nicegui>=1.4.29",
+    "ngwidgets>=0.16.4",
     # openai
     "openai",
     # pydantic
@@ -42,6 +42,7 @@ classifiers=[
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Intended Audience :: Developers",
