@@ -1,3 +1,4 @@
+from nicegui import ui
 class AxesHelper:
     """
     A Python class for creating a 3D helper for visualizing the axes in a scene.

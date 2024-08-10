@@ -233,12 +233,18 @@ example();"""
         """
         toggle the axes of my scene
         """
-        self.toggle_icon(self.axes_button)
-        if self.axes_view is None:
-            self.axes_view = AxesHelper(self.scene)
-        else:
-            self.axes_view.toggle_axes()
-        pass
+        try:
+            self.toggle_icon(self.axes_button)
+            new_state=not self.axes_view or not self.axes_view.axes_visible
+            new_msg="on" if new_state else "off"
+            ui.notify(f"toggling axes {new_msg}")
+            if self.axes_view is None:
+                self.axes_view = AxesHelper(self.scene)
+            else:
+                self.axes_view.toggle_axes()
+        except Exception as ex:
+            self.handle_exception(ex)
+
 
     async def toggle_grid(self, _ea):
         """
@@ -258,8 +264,8 @@ example();"""
             self.scene.update()
             # try toggling icon
             self.toggle_icon(self.grid_button)
-        except BaseException as ex:
-            self.handleExeption(ex)
+        except Exception as ex:
+            self.handle_exeption(ex)
         pass
 
     def prepare_ui(self):
@@ -276,24 +282,25 @@ example();"""
         with ui.column():
             with ui.splitter() as splitter:
                 with splitter.before:
-                    self.grid_button = self.tool_button(
-                        "toggle grid",
-                        handler=self.toggle_grid,
-                        icon="grid_off",
-                        toggle_icon="grid_on",
-                    )
-                    self.axes_button = self.tool_button(
-                        "toggle axes",
-                        icon="polyline",
-                        toggle_icon="square",
-                        handler=self.toggle_axes,
-                    )
-                    self.color_picker_button = ui.button(
-                        icon="colorize", color=self.stl_color
-                    )
-                    with self.color_picker_button:
-                        self.color_picker = ui.color_picker(on_pick=self.pick_color)
-                    self.color_picker_button.disable()
+                    with ui.row() as self.button_row:
+                        self.grid_button = self.tool_button(
+                            "toggle grid",
+                            handler=self.toggle_grid,
+                            icon="grid_off",
+                            toggle_icon="grid_on",
+                        )
+                        self.axes_button = self.tool_button(
+                            "toggle axes",
+                            icon="polyline",
+                            toggle_icon="square",
+                            handler=self.toggle_axes,
+                        )
+                        self.color_picker_button = ui.button(
+                            icon="colorize", color=self.stl_color
+                        )
+                        with self.color_picker_button:
+                            self.color_picker = ui.color_picker(on_pick=self.pick_color)
+                        self.color_picker_button.disable()
 
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
                         self.scene = scene
