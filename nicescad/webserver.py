@@ -121,8 +121,6 @@ example();"""
             render_result = await self.oscad.openscad_str_to_file(
                 openscad_str, stl_path
             )
-            # show render result in log
-            self.log_view.push(render_result.stderr)
             if render_result.returncode == 0:
                 ui.notify("stl created ... loading into scene")
                 self.stl_link.visible = True
@@ -133,6 +131,10 @@ example();"""
                     )
                     self.stl_object.name = self.stl_name
                     self.stl_object.material(self.stl_color)
+            else:
+                ui.notify(f"failed to create stl return code {render_result.returncode}")
+            # show render result in log
+            self.log_view.push(render_result.stderr)
         except BaseException as ex:
             self.handle_exception(ex, self.do_trace)
         self.progress_view.visible = False
