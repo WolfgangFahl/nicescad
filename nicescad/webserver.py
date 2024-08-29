@@ -12,9 +12,8 @@ from ngwidgets.input_webserver import InputWebserver, InputWebSolution
 from ngwidgets.local_filepicker import LocalFilePicker
 from ngwidgets.webserver import WebserverConfig, WebSolution
 from nicegui import Client, app, ui
-from nicegui.events import ColorPickEventArguments
+from ngwidgets.scene_frame import SceneFrame
 
-from nicescad.axes_helper import AxesHelper
 from nicescad.openscad import OpenScad
 from nicescad.version import Version
 
@@ -89,11 +88,8 @@ class NiceScadSolution(InputWebSolution):
         super().__init__(webserver, client)  # Call to the superclass constructor
         self.input = "example.scad"
         self.stl_name = "result.stl"
-        self.stl_color = "#57B6A9"
-        self.stl_object = None
         self.do_trace = True
         self.html_view = None
-        self.axes_view = None
         self.oscad = webserver.oscad
         self.code = """// nicescad example
 module example() {
@@ -115,7 +111,7 @@ example();"""
             ui.notify("rendering ...")
             with self.scene:
                 self.stl_link.visible = False
-                self.color_picker_button.disable()
+                self.scene_frame.color_picker_button.disable()
             openscad_str = self.code_area.value
             stl_path = stl_path = os.path.join(self.oscad.tmp_dir, self.stl_name)
             render_result = await self.oscad.openscad_str_to_file(
@@ -124,13 +120,7 @@ example();"""
             if render_result.returncode == 0:
                 ui.notify("stl created ... loading into scene")
                 self.stl_link.visible = True
-                self.color_picker_button.enable()
-                with self.scene:
-                    self.stl_object = (
-                        self.scene.stl(f"/stl/{self.stl_name}").move(x=0.0).scale(0.1)
-                    )
-                    self.stl_object.name = self.stl_name
-                    self.stl_object.material(self.stl_color)
+                self.scene_frame.load_stl(stl_name=self.stl_name,url=f"/stl/{self.stl_name}",scale=0.1)
             else:
                 ui.notify(f"failed to create stl return code {render_result.returncode}")
             # show render result in log
@@ -210,65 +200,6 @@ example();"""
         except BaseException as ex:
             self.handle_exception(ex, self.do_trace)
 
-    async def pick_color(self, e: ColorPickEventArguments):
-        """
-        Asynchronously picks a color based on provided event arguments.
-
-        This function changes the color of the 'color_picker_button' and the 'stl_object'
-        according to the color specified in the event arguments.
-
-        Args:
-            e (ColorPickEventArguments): An object containing event-specific arguments.
-                The 'color' attribute of this object specifies the color to be applied.
-
-        Note:
-            If 'stl_object' is None, the function will only change the color of 'color_picker_button'.
-            Otherwise, it changes the color of both 'color_picker_button' and 'stl_object'.
-        """
-        self.color_picker_button.style(f"background-color:{e.color}!important")
-        if self.stl_object:
-            self.stl_color = e.color
-            self.stl_object.material(f"{e.color}")
-        pass
-
-    async def toggle_axes(self):
-        """
-        toggle the axes of my scene
-        """
-        try:
-            self.toggle_icon(self.axes_button)
-            new_state=not self.axes_view or not self.axes_view.axes_visible
-            new_msg="on" if new_state else "off"
-            ui.notify(f"toggling axes {new_msg}")
-            if self.axes_view is None:
-                self.axes_view = AxesHelper(self.scene)
-            else:
-                self.axes_view.toggle_axes()
-        except Exception as ex:
-            self.handle_exception(ex)
-
-
-    async def toggle_grid(self, _ea):
-        """
-        toogle the grid of my scene
-        """
-        try:
-            grid = self.scene._props["grid"]
-            grid_str = "off" if grid else "on"
-            grid_js = "false" if grid else "true"
-            # try toggling grid
-            ui.notify(f"setting grid to {grid_str}")
-            grid = not grid
-            # workaround according to https://github.com/zauberzeug/nicegui/discussions/1246
-            js_cmd = f'scene_c{self.scene.id}.children.find(c => c.type === "GridHelper").visible = {grid_js}'
-            await ui.run_javascript(js_cmd, respond=False)
-            self.scene._props["grid"] = grid
-            self.scene.update()
-            # try toggling icon
-            self.toggle_icon(self.grid_button)
-        except Exception as ex:
-            self.handle_exeption(ex)
-        pass
 
     def prepare_ui(self):
         """
@@ -284,28 +215,11 @@ example();"""
         with ui.column():
             with ui.splitter() as splitter:
                 with splitter.before:
-                    with ui.row() as self.button_row:
-                        self.grid_button = self.tool_button(
-                            "toggle grid",
-                            handler=self.toggle_grid,
-                            icon="grid_off",
-                            toggle_icon="grid_on",
-                        )
-                        self.axes_button = self.tool_button(
-                            "toggle axes",
-                            icon="polyline",
-                            toggle_icon="square",
-                            handler=self.toggle_axes,
-                        )
-                        self.color_picker_button = ui.button(
-                            icon="colorize", color=self.stl_color
-                        )
-                        with self.color_picker_button:
-                            self.color_picker = ui.color_picker(on_pick=self.pick_color)
-                        self.color_picker_button.disable()
-
+                    self.scene_frame=SceneFrame(self)
+                    self.scene_frame.setup_button_row()
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
                         self.scene = scene
+                        self.scene_frame.scene=scene
                         scene.spot_light(distance=100, intensity=0.2).move(-10, 0, 10)
                     with splitter.after:
                         with ui.element("div").classes("w-full"):
