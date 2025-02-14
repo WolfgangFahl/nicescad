@@ -40,7 +40,7 @@ class NiceScadCmd(WebserverCmd):
             "-rp",
             "--root_path",
             default=NiceScadWebServer.examples_path(),
-            help="path to pdf files [default: %(default)s]",
+            help="path to scad files [default: %(default)s]",
         )
         return parser
 
