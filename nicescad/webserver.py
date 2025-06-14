@@ -5,6 +5,7 @@ Created on 2023-06-19
 """
 
 import os
+import uuid
 from pathlib import Path
 
 from ngwidgets.file_selector import FileSelector
@@ -52,18 +53,16 @@ $fn=30;
         self.design_dir.mkdir(parents=True, exist_ok=True)
         app.add_static_files("/stl", self.oscad.tmp_dir)
         app.add_static_files("/designs", self.design_dir)
-        self.short_url=ShortUrl(
+        self.short_url = ShortUrl(
             base_path=self.design_dir,
             suffix=".scad",
-            required_keywords=["module","// Copyright Wolfgang Fahl"],
-            lenient=True)
-
+            required_keywords=["module", "// Copyright Wolfgang Fahl"],
+            lenient=True,
+        )
 
         @ui.page("/design/{short_id}")
         async def show_design(short_id: str, client: Client):
-            return await self.page(
-                client, NiceScadSolution.show_design, short_id
-            )
+            return await self.page(client, NiceScadSolution.show_design, short_id)
 
     def configure_run(self):
         root_path = (
@@ -103,7 +102,7 @@ class NiceScadSolution(InputWebSolution):
         """
         super().__init__(webserver, client)  # Call to the superclass constructor
         self.input = "example.scad"
-        self.stl_name = "result.stl"
+        self.stl_name = f"nicescad_{uuid.uuid4().hex}.stl"
         self.do_trace = True
         self.html_view = None
         self.oscad = webserver.oscad
@@ -130,6 +129,8 @@ example();"""
                 self.scene_frame.color_picker_button.disable()
             openscad_str = self.code
             stl_path = stl_path = os.path.join(self.oscad.tmp_dir, self.stl_name)
+            if os.path.exists(stl_path):
+                os.remove(stl_path)
             render_result = await self.oscad.openscad_str_to_file(
                 openscad_str, stl_path
             )
@@ -137,10 +138,14 @@ example();"""
                 ui.notify("stl created ... loading into scene")
                 self.stl_link.visible = True
                 self.scene_frame.clear()
-                self.scene_frame.load_stl(stl_name=self.stl_name,url=f"/stl/{self.stl_name}",scale=0.1)
+                self.scene_frame.load_stl(
+                    stl_name=self.stl_name, url=f"/stl/{self.stl_name}", scale=0.1
+                )
                 self.scene_frame.update()
             else:
-                ui.notify(f"failed to create stl return code {render_result.returncode}")
+                ui.notify(
+                    f"failed to create stl return code {render_result.returncode}"
+                )
             # show render result in log
             self.log_view.push(render_result.stderr)
         except BaseException as ex:
@@ -180,13 +185,13 @@ example();"""
         Shows debug output and UI notifications with the generated ID and storage path.
         """
         try:
-            msg=self.webserver.short_url.validate_code(self.code)
+            msg = self.webserver.short_url.validate_code(self.code)
             if msg:
                 ui.notify(msg)
             else:
                 short_id = self.webserver.short_url.save(self.code)
                 ui.notify(f"✅ short id: {short_id} created")
-                url=f"/design/{short_id}"
+                url = f"/design/{short_id}"
                 ui.navigate.to(url)
 
         except Exception as ex:
@@ -240,7 +245,6 @@ example();"""
         except BaseException as ex:
             self.handle_exception(ex, self.do_trace)
 
-
     def prepare_ui(self):
         """
         handle the command line arguments
@@ -255,11 +259,11 @@ example();"""
         with ui.column():
             with ui.splitter() as splitter:
                 with splitter.before:
-                    self.scene_frame=SceneFrame(self)
+                    self.scene_frame = SceneFrame(self)
                     self.scene_frame.setup_button_row()
                     with ui.scene(width=1024, height=768).classes("w-full") as scene:
                         self.scene = scene
-                        self.scene_frame.scene=scene
+                        self.scene_frame.scene = scene
                         scene.spot_light(distance=100, intensity=0.2).move(-10, 0, 10)
                     with splitter.after:
                         with ui.element("div").classes("w-full"):
@@ -284,7 +288,9 @@ example();"""
                                 )
                             else:
                                 self.tool_button(
-                                    tooltip="create short_url", icon="save", handler=self.create_short_url
+                                    tooltip="create short_url",
+                                    icon="save",
+                                    handler=self.create_short_url,
                                 )
                             self.tool_button(
                                 tooltip="reload",
@@ -329,20 +335,20 @@ example();"""
         def show():
             try:
                 self.setup_ui()
-                self.code=self.webserver.short_url.load(short_id)
+                self.code = self.webserver.short_url.load(short_id)
                 self.render()
             except Exception as _ex:
                 ui.notify(f"invalid design {short_id}")
 
-        await  self.setup_content_div(show)
+        await self.setup_content_div(show)
 
     async def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
+
         def show():
             self.setup_ui()
-        await  self.setup_content_div(show)
 
-
+        await self.setup_content_div(show)
 
     def configure_settings(self):
         """Generates the settings page with a link to the project's GitHub page."""
