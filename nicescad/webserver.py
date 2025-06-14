@@ -138,8 +138,10 @@ example();"""
                 ui.notify("stl created ... loading into scene")
                 self.stl_link.visible = True
                 self.scene_frame.clear()
+                # avoid caching
+                stl_url=f"/stl/{self.stl_name}?v={uuid.uuid4().hex}"
                 self.scene_frame.load_stl(
-                    stl_name=self.stl_name, url=f"/stl/{self.stl_name}", scale=0.1
+                    stl_name=self.stl_name, url=stl_url, scale=0.1
                 )
                 self.scene_frame.update()
             else:
