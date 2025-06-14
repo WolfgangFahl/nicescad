@@ -10,9 +10,10 @@ from pathlib import Path
 from ngwidgets.file_selector import FileSelector
 from ngwidgets.input_webserver import InputWebserver, InputWebSolution
 from ngwidgets.local_filepicker import LocalFilePicker
+from ngwidgets.scene_frame import SceneFrame
+from ngwidgets.short_url import ShortUrl
 from ngwidgets.webserver import WebserverConfig
 from nicegui import Client, app, ui
-from ngwidgets.scene_frame import SceneFrame
 
 from nicescad.openscad import OpenScad
 from nicescad.version import Version
@@ -47,10 +48,11 @@ class NiceScadWebServer(InputWebserver):
 $fn=30;
 """
         )
-        self.design_dir = Path.home() / ".oscad" / "designs"
+        self.design_dir = Path.home() / ".nicescad" / "designs"
         self.design_dir.mkdir(parents=True, exist_ok=True)
         app.add_static_files("/stl", self.oscad.tmp_dir)
         app.add_static_files("/designs", self.design_dir)
+        self.short_url=ShortUrl(base_path=self.design_dir,suffix=".scad",required_keywords=["module","// Copyright Wolfgang Fahl"])
 
 
         @ui.page("/design/{short_id}")
@@ -167,6 +169,21 @@ example();"""
             ui.notify(f"{self.input} saved")
         else:
             raise Exception("No local file to save to")
+        
+    def create_short_url(self):
+        """
+        Create a short URL ID for the current code and store it via ShortUrl.
+
+        Shows debug output and UI notifications with the generated ID and storage path.
+        """
+        try:
+            short_id = self.webserver.short_url.save(self.code)
+            ui.notify(f"✅ short id: {short_id} created for: {self.input}")
+            ui.notify(f"🔗 open at /design/{short_id}")
+            print(f"✅ short id: {short_id} created for: {self.input}")
+            print(f"📄 stored at: {self.webserver.short_url.path_for_id(short_id)}")
+        except Exception as ex:
+            self.handle_exception(ex, self.do_trace)
 
     async def open_file(self) -> None:
         """Opens a Local filer picker dialog and reads the selected input file."""
@@ -272,6 +289,10 @@ example();"""
                             if self.is_local:
                                 self.tool_button(
                                     tooltip="save", icon="save", handler=self.save_file
+                                )
+                            else:
+                                self.tool_button(
+                                    tooltip="create short_url", icon="save", handler=self.create_short_url
                                 )
                             self.tool_button(
                                 tooltip="reload",
