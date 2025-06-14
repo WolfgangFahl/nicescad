@@ -52,7 +52,11 @@ $fn=30;
         self.design_dir.mkdir(parents=True, exist_ok=True)
         app.add_static_files("/stl", self.oscad.tmp_dir)
         app.add_static_files("/designs", self.design_dir)
-        self.short_url=ShortUrl(base_path=self.design_dir,suffix=".scad",required_keywords=["module","// Copyright Wolfgang Fahl"])
+        self.short_url=ShortUrl(
+            base_path=self.design_dir,
+            suffix=".scad",
+            required_keywords=["module","// Copyright Wolfgang Fahl"],
+            lenient=True)
 
 
         @ui.page("/design/{short_id}")
@@ -169,7 +173,7 @@ example();"""
             ui.notify(f"{self.input} saved")
         else:
             raise Exception("No local file to save to")
-        
+
     def create_short_url(self):
         """
         Create a short URL ID for the current code and store it via ShortUrl.
@@ -177,11 +181,15 @@ example();"""
         Shows debug output and UI notifications with the generated ID and storage path.
         """
         try:
-            short_id = self.webserver.short_url.save(self.code)
-            ui.notify(f"✅ short id: {short_id} created for: {self.input}")
-            ui.notify(f"🔗 open at /design/{short_id}")
-            print(f"✅ short id: {short_id} created for: {self.input}")
-            print(f"📄 stored at: {self.webserver.short_url.path_for_id(short_id)}")
+            msg=self.webserver.short_url.validate_code(self.code)
+            if msg:
+                ui.notify(msg)
+            else:
+                short_id = self.webserver.short_url.save(self.code)
+                ui.notify(f"✅ short id: {short_id} created")
+                url=f"/design/{short_id}"
+                ui.navigate.to(url)
+
         except Exception as ex:
             self.handle_exception(ex, self.do_trace)
 
@@ -241,25 +249,10 @@ example();"""
         InputWebSolution.prepare_ui(self)
         self.setup_pygments()
 
-    async def show_design(self, short_id: str):
-        def show():
-            path = os.path.join(self.oscad.tmp_dir, "designs", f"{short_id}.scad")
-            if os.path.exists(path):
-                with open(path) as f:
-                    self.code = f.read()
-                self.code_area.set_value(self.code)
-                self.render()
-            else:
-                ui.notify(f"design {short_id} not found")
-
-        await self.setup_content_div(show)
-
-
-
-    async def home(self):
-        """Generates the home page with a 3D viewer and a code editor."""
-
-        self.setup_menu()
+    def setup_ui(self):
+        """
+        setup the ui
+        """
         with ui.column():
             with ui.splitter() as splitter:
                 with splitter.before:
@@ -333,9 +326,26 @@ example();"""
                             self.html_view = ui.html()
                             self.html_view.visible = False
                             self.log_view = ui.log(max_lines=20).classes("w-full h-40")
-        await self.setup_footer()
-        if self.args.input:
-            await self.read_and_optionally_render(self.args.input)
+
+    async def show_design(self, short_id: str):
+        def show():
+            try:
+                self.setup_ui()
+                self.code=self.webserver.short_url.load(short_id)
+                self.code_area.set_value(self.code)
+                self.render()
+            except Exception as _ex:
+                ui.notify(f"invalid design {short_id}")
+
+        await  self.setup_content_div(show)
+
+    async def home(self):
+        """Generates the home page with a 3D viewer and a code editor."""
+        def show():
+            self.setup_ui()
+        await  self.setup_content_div(show)
+
+
 
     def configure_settings(self):
         """Generates the settings page with a link to the project's GitHub page."""
