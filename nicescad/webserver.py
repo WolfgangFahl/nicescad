@@ -128,7 +128,7 @@ example();"""
             with self.scene:
                 self.stl_link.visible = False
                 self.scene_frame.color_picker_button.disable()
-            openscad_str = self.code_area.value
+            openscad_str = self.code
             stl_path = stl_path = os.path.join(self.oscad.tmp_dir, self.stl_name)
             render_result = await self.oscad.openscad_str_to_file(
                 openscad_str, stl_path
@@ -157,7 +157,6 @@ example();"""
             ui.notify(f"reading {input_str}")
             self.code = self.do_read_input(input_str)
             self.input_input.set_value(input_str)
-            self.code_area.set_value(self.code)
             self.log_view.clear()
             self.error_msg = None
             self.stl_link.visible = False
@@ -217,11 +216,11 @@ example();"""
         pygments_css = pygments_css_file.read_text()
         ui.add_head_html(f"<style>{pygments_css}</style>")
 
-    def code_changed(self, cargs):
+    def code_changed(self, _cargs):
         """
         react on changed code
         """
-        self.code = cargs.value
+        ui.notify("code changed")
         pass
 
     async def highlight_code(self, _cargs):
@@ -317,9 +316,8 @@ example();"""
                             )
                             self.progress_view.visible = False
                             self.code_area = (
-                                ui.textarea(
-                                    value=self.code, on_change=self.code_changed
-                                )
+                                ui.textarea(on_change=self.code_changed)
+                                .bind_value(self, "code")
                                 .props("clearable")
                                 .props("rows=25")
                             )
@@ -332,7 +330,6 @@ example();"""
             try:
                 self.setup_ui()
                 self.code=self.webserver.short_url.load(short_id)
-                self.code_area.set_value(self.code)
                 self.render()
             except Exception as _ex:
                 ui.notify(f"invalid design {short_id}")
