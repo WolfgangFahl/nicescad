@@ -47,7 +47,10 @@ class NiceScadWebServer(InputWebserver):
 $fn=30;
 """
         )
+        self.design_dir = Path.home() / ".oscad" / "designs"
+        self.design_dir.mkdir(parents=True, exist_ok=True)
         app.add_static_files("/stl", self.oscad.tmp_dir)
+        app.add_static_files("/designs", self.design_dir)
 
 
         @ui.page("/design/{short_id}")
