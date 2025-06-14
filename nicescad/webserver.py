@@ -221,12 +221,11 @@ example();"""
         pygments_css = pygments_css_file.read_text()
         ui.add_head_html(f"<style>{pygments_css}</style>")
 
-    def code_changed(self, _cargs):
+    async def code_changed(self, _cargs):
         """
         react on changed code
         """
         ui.notify("code changed")
-        pass
 
     async def highlight_code(self, _cargs):
         """
@@ -336,7 +335,6 @@ example();"""
             try:
                 self.setup_ui()
                 self.code = self.webserver.short_url.load(short_id)
-                self.render()
             except Exception as _ex:
                 ui.notify(f"invalid design {short_id}")
 
