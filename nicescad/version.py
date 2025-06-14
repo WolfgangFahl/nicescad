@@ -18,7 +18,7 @@ class Version(object):
     name = "nicescad"
     version = nicescad.__version__
     date = "2023-07-19"
-    updated = "2024-10-01"
+    updated = "2025-06-14"
     description = "nicescad brings OpenScad to the browser (again)"
 
     authors = "Wolfgang Fahl"
@@ -27,7 +27,7 @@ class Version(object):
     chat_url = "https://github.com/WolfgangFahl/nicescad/discussions"
     cm_url = "https://github.com/WolfgangFahl/nicescad"
 
-    license = f"""Copyright 2023-2024 contributors. All rights reserved.
+    license = f"""Copyright 2023-2025 contributors. All rights reserved.
 
   Licensed under the Apache License 2.0
   http://www.apache.org/licenses/LICENSE-2.0

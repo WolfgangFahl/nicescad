@@ -10,7 +10,7 @@ from pathlib import Path
 from ngwidgets.file_selector import FileSelector
 from ngwidgets.input_webserver import InputWebserver, InputWebSolution
 from ngwidgets.local_filepicker import LocalFilePicker
-from ngwidgets.webserver import WebserverConfig, WebSolution
+from ngwidgets.webserver import WebserverConfig
 from nicegui import Client, app, ui
 from ngwidgets.scene_frame import SceneFrame
 
@@ -27,7 +27,7 @@ class NiceScadWebServer(InputWebserver):
 
     @classmethod
     def get_config(cls) -> WebserverConfig:
-        copy_right = "(c)2023-2024 Wolfgang Fahl"
+        copy_right = "(c)2023-2025 Wolfgang Fahl"
         config = WebserverConfig(
             copy_right=copy_right,
             version=Version(),
@@ -48,6 +48,13 @@ $fn=30;
 """
         )
         app.add_static_files("/stl", self.oscad.tmp_dir)
+
+
+        @ui.page("/design/{short_id}")
+        async def show_design(short_id: str, client: Client):
+            return await self.page(
+                client, NiceScadSolution.show_design, short_id
+            )
 
     def configure_run(self):
         root_path = (
@@ -120,7 +127,9 @@ example();"""
             if render_result.returncode == 0:
                 ui.notify("stl created ... loading into scene")
                 self.stl_link.visible = True
+                self.scene_frame.clear()
                 self.scene_frame.load_stl(stl_name=self.stl_name,url=f"/stl/{self.stl_name}",scale=0.1)
+                self.scene_frame.update()
             else:
                 ui.notify(f"failed to create stl return code {render_result.returncode}")
             # show render result in log
@@ -166,6 +175,10 @@ example();"""
 
     pass
 
+    async def clear(self):
+        self.scene_frame.clear()
+        self.scene_frame.update()
+
     def setup_pygments(self):
         """
         prepare pygments syntax highlighting by loading style
@@ -208,6 +221,21 @@ example();"""
         InputWebSolution.prepare_ui(self)
         self.setup_pygments()
 
+    async def show_design(self, short_id: str):
+        def show():
+            path = os.path.join(self.oscad.tmp_dir, "designs", f"{short_id}.scad")
+            if os.path.exists(path):
+                with open(path) as f:
+                    self.code = f.read()
+                self.code_area.set_value(self.code)
+                self.render()
+            else:
+                ui.notify(f"design {short_id} not found")
+
+        await self.setup_content_div(show)
+
+
+
     async def home(self):
         """Generates the home page with a 3D viewer and a code editor."""
 
@@ -246,6 +274,11 @@ example();"""
                                 tooltip="reload",
                                 icon="refresh",
                                 handler=self.reload_file,
+                            )
+                            self.tool_button(
+                                tooltip="clear",
+                                icon="clear",
+                                handler=self.clear,
                             )
                             if self.is_local:
                                 self.tool_button(
