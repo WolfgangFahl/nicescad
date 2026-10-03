@@ -11,14 +11,23 @@ nicescad brings OpenScad to the browser (again)
 [![License](https://img.shields.io/github/license/WolfgangFahl/nicescad.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Demo
-[Demo](http://nicescad.bitplan.com/)
+[Demo](https://nicescad.bitplan.com/)
+
+## Features
+* OpenSCAD editor with 3D view of the rendered STL
+* share links `/design/<id>` e.g. [webcam arm](https://nicescad.bitplan.com/design/gdzux4w4), [curve](https://nicescad.bitplan.com/design/quutn5nn)
+* import of [BlocksCAD](https://www.blockscad3d.com/) files, see [nicescad_examples/blockscad](https://github.com/WolfgangFahl/nicescad/tree/main/nicescad_examples/blockscad)
+
+## Prerequisites
+* [OpenSCAD](https://openscad.org/) command line, detected automatically or set via the environment variables `OPENSCAD_EXEC` and `OPENSCAD_TMP_DIR`
+* OpenSCAD 2021.01 renders with the CGAL backend only; the faster Manifold backend waits for the next OpenSCAD release, see [#30](https://github.com/WolfgangFahl/nicescad/issues/30)
 
 ## Docs and Tutorials
 [Wiki](https://wiki.bitplan.com/index.php/nicescad)
 
 ## Examples
 * [Basics/logo](https://raw.githubusercontent.com/openscad/openscad/master/examples/Basics/logo.scad)
-* [Intersection](https://raw.githubusercontent.com/WolfgangFahl/nicescad/main/examples/intersection.scad)
+* [Intersection](https://github.com/WolfgangFahl/nicescad/blob/main/nicescad_examples/scad/openscad_examples/Basics/intersection.scad)
 
 ## Links
 * https://openscad.org/
@@ -27,8 +36,8 @@ nicescad brings OpenScad to the browser (again)
 * https://ochafik.com/openscad2/
 * http://www.implicitcad.org/editor
 * https://www.blockscad3d.com/editor/
-* https://openjscad.azurewebsites.net/
 * https://openjscad.xyz/
+* https://cad-n-done.de (closed source)
 ### Jupyter notebook integration
 * https://github.com/nickc92/ViewSCAD
 ### Python integration
